@@ -4,11 +4,14 @@ import {
   LOCAL_PLACES,
   BOOKABLE_EXPERIENCES,
   HOTEL_UPSELLS,
+  DEFAULT_DEALS,
+  IN_ROOM_DINING_MENU,
   TRANSLATIONS,
   PropertyInfo,
   LocalPlace,
   BookableExperience,
   UpsellItem,
+  DealItem,
   StaffTicket,
   MenuItem,
 } from "../../../shared/airpal-data";
@@ -22,6 +25,17 @@ import {
   syncTicketToBackend,
   trackAirPalEvent,
   updateRemoteTicket,
+  loadProperty,
+  saveProperty,
+  loadPropertyDeals,
+  savePropertyDeal,
+  deletePropertyDeal,
+  loadPropertyMenu,
+  savePropertyMenuItem,
+  deletePropertyMenuItem,
+  loadPropertyPlaces,
+  savePropertyPlace,
+  deletePropertyPlace,
 } from "../lib/airpal-backend";
 
 export type DeviceMode = "iphone" | "android" | "tablet" | "responsive";
@@ -34,7 +48,10 @@ export interface CartItem {
 }
 
 interface AirPalContextType {
+  propertyId: string;
+  setPropertyId: (id: string) => void;
   property: PropertyInfo;
+  updateProperty: (prop: PropertyInfo) => Promise<void>;
   roomNumber: string;
   setRoomNumber: (room: string) => void;
   guestName: string;
@@ -65,7 +82,17 @@ interface AirPalContextType {
   savedPlaces: string[];
   toggleSavePlace: (placeId: string) => void;
   places: LocalPlace[];
+  addPlace: (place: LocalPlace) => Promise<void>;
+  removePlace: (placeId: string) => Promise<void>;
   experiences: BookableExperience[];
+  deals: DealItem[];
+  addDeal: (deal: DealItem) => Promise<void>;
+  updateDeal: (deal: DealItem) => Promise<void>;
+  removeDeal: (dealId: string) => Promise<void>;
+  menuItems: MenuItem[];
+  addMenuItem: (item: MenuItem) => Promise<void>;
+  updateMenuItem: (item: MenuItem) => Promise<void>;
+  removeMenuItem: (itemId: string) => Promise<void>;
   upsells: UpsellItem[];
   trackEvent: (name: string, payload?: Record<string, string | number | boolean | null>) => void;
 }
@@ -75,7 +102,8 @@ const AirPalContext = createContext<AirPalContextType | undefined>(undefined);
 const SUPPORTED_LANGUAGES = Object.keys(TRANSLATIONS);
 
 export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [property] = useState<PropertyInfo>(CURRENT_PROPERTY);
+  const [propertyId, setPropertyIdState] = useState<string>("harbour-hotel");
+  const [property, setProperty] = useState<PropertyInfo>(() => loadProperty("harbour-hotel"));
   const [roomNumber, setRoomNumber] = useState<string>("508");
   const [guestName, setGuestName] = useState<string>("Bibin");
   const [qrType, setQrType] = useState<QrType>("room");
@@ -88,6 +116,93 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [activeUpsells, setActiveUpsells] = useState<string[]>([]);
   const [savedPlaces, setSavedPlaces] = useState<string[]>(["p1", "p4"]);
+
+  // Dynamic Data collections
+  const [deals, setDeals] = useState<DealItem[]>(() => loadPropertyDeals(propertyId));
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(() => loadPropertyMenu(propertyId));
+  const [places, setPlaces] = useState<LocalPlace[]>(() => loadPropertyPlaces(propertyId));
+
+  const setPropertyId = useCallback((id: string) => {
+    setPropertyIdState(id);
+    const p = loadProperty(id);
+    setProperty(p);
+    setDeals(loadPropertyDeals(id));
+    setMenuItems(loadPropertyMenu(id));
+    setPlaces(loadPropertyPlaces(id));
+  }, []);
+
+  const updateProperty = async (updated: PropertyInfo) => {
+    setProperty(updated);
+    await saveProperty(updated);
+    toast.success("Property Compendium Updated", {
+      description: "Changes are live for all guests immediately.",
+    });
+  };
+
+  const addDeal = async (deal: DealItem) => {
+    await savePropertyDeal(property.id, deal);
+    setDeals(loadPropertyDeals(property.id));
+    toast.success("New Deal Published", {
+      description: `${deal.title} is now visible to guests.`,
+    });
+  };
+
+  const updateDeal = async (deal: DealItem) => {
+    await savePropertyDeal(property.id, deal);
+    setDeals(loadPropertyDeals(property.id));
+    toast.info("Deal Updated");
+  };
+
+  const removeDeal = async (dealId: string) => {
+    await deletePropertyDeal(property.id, dealId);
+    setDeals(loadPropertyDeals(property.id));
+    toast.info("Deal Removed");
+  };
+
+  const addMenuItem = async (item: MenuItem) => {
+    await savePropertyMenuItem(property.id, item);
+    setMenuItems(loadPropertyMenu(property.id));
+    toast.success("Menu Item Added", {
+      description: `${item.name} (${item.category}) added to Dining Menu.`,
+    });
+  };
+
+  const updateMenuItem = async (item: MenuItem) => {
+    await savePropertyMenuItem(property.id, item);
+    setMenuItems(loadPropertyMenu(property.id));
+    toast.info("Menu Item Updated");
+  };
+
+  const removeMenuItem = async (itemId: string) => {
+    await deletePropertyMenuItem(property.id, itemId);
+    setMenuItems(loadPropertyMenu(property.id));
+    toast.info("Menu Item Removed");
+  };
+
+  const addPlace = async (place: LocalPlace) => {
+    await savePropertyPlace(property.id, place);
+    setPlaces(loadPropertyPlaces(property.id));
+    toast.success("Local Recommendation Added");
+  };
+
+  const removePlace = async (placeId: string) => {
+    await deletePropertyPlace(property.id, placeId);
+    setPlaces(loadPropertyPlaces(property.id));
+    toast.info("Recommendation Removed");
+  };
+
+  // Convert active deals to UpsellItems for guest companion
+  const upsells: UpsellItem[] = deals
+    .filter((d) => d.active !== false)
+    .map((d) => ({
+      id: d.id,
+      title: d.title,
+      subtitle: d.subtitle,
+      price: d.price,
+      badge: d.discountBadge || d.badge || "Special Offer",
+      iconName: d.iconName || "Sparkles",
+      category: d.category || "stay",
+    }));
 
   const t = (key: string): string => {
     const langDict = TRANSLATIONS[language] || TRANSLATIONS.en;
@@ -118,6 +233,7 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const addStaffTicket = (category: StaffTicket["category"], details: string, urgency: "normal" | "urgent" = "normal"): StaffTicket => {
     const newTicket: StaffTicket = {
       id: `t-${Date.now().toString().slice(-4)}`,
+      propertyId: property.id,
       roomNumber,
       guestName,
       category,
@@ -180,7 +296,7 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const purchaseUpsell = (upsellId: string) => {
     if (activeUpsells.includes(upsellId)) return;
     setActiveUpsells((prev) => [...prev, upsellId]);
-    const up = HOTEL_UPSELLS.find((item) => item.id === upsellId);
+    const up = upsells.find((item) => item.id === upsellId) || HOTEL_UPSELLS.find((item) => item.id === upsellId);
     if (up) {
       void recordTransaction({
         propertyId: property.id,
@@ -208,7 +324,10 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   return (
     <AirPalContext.Provider
       value={{
+        propertyId,
+        setPropertyId,
         property,
+        updateProperty,
         roomNumber,
         setRoomNumber,
         guestName,
@@ -238,9 +357,19 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         purchaseUpsell,
         savedPlaces,
         toggleSavePlace,
-        places: LOCAL_PLACES,
+        places,
+        addPlace,
+        removePlace,
         experiences: BOOKABLE_EXPERIENCES,
-        upsells: HOTEL_UPSELLS,
+        deals,
+        addDeal,
+        updateDeal,
+        removeDeal,
+        menuItems,
+        addMenuItem,
+        updateMenuItem,
+        removeMenuItem,
+        upsells,
         trackEvent,
       }}
     >

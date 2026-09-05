@@ -11,14 +11,27 @@ import {
 import { nanoid } from "nanoid";
 import {
   INITIAL_STAFF_TICKETS,
+  ALL_PROPERTIES,
+  CURRENT_PROPERTY,
+  DEFAULT_DEALS,
+  IN_ROOM_DINING_MENU,
+  LOCAL_PLACES,
   type StaffTicket,
+  type PropertyInfo,
+  type DealItem,
+  type MenuItem,
+  type LocalPlace,
 } from "@shared/airpal-data";
 import { ensureAnonymousSession, getFirebaseDb, isFirebaseConfigured } from "./firebase";
 
 const PROPERTY_ID = "harbour-hotel";
+const LOCAL_PROPERTIES_KEY = "airpal.properties";
 const LOCAL_TICKETS_KEY = "airpal.tickets";
 const LOCAL_EVENTS_KEY = "airpal.events";
 const LOCAL_SESSION_KEY = "airpal.session";
+const LOCAL_DEALS_PREFIX = "airpal.deals.";
+const LOCAL_MENU_PREFIX = "airpal.menu.";
+const LOCAL_PLACES_PREFIX = "airpal.places.";
 
 export interface AnalyticsEvent {
   id: string;
@@ -204,6 +217,138 @@ export async function recordTransaction(payload: {
   } catch (error) {
     console.warn("AirPal transaction sync skipped", error);
   }
+}
+
+// ---------------- Multi-Tenant Properties CRUD ---------------- //
+
+export function loadAllProperties(): PropertyInfo[] {
+  const stored = readLocal<PropertyInfo[]>(LOCAL_PROPERTIES_KEY, []);
+  if (stored.length === 0) return ALL_PROPERTIES;
+  const map = new Map<string, PropertyInfo>();
+  ALL_PROPERTIES.forEach((p) => map.set(p.id, p));
+  stored.forEach((p) => map.set(p.id, p));
+  return Array.from(map.values());
+}
+
+export function loadProperty(propertyId: string): PropertyInfo {
+  const all = loadAllProperties();
+  const found = all.find((p) => p.id === propertyId);
+  return found || CURRENT_PROPERTY;
+}
+
+export async function saveProperty(property: PropertyInfo): Promise<PropertyInfo> {
+  const all = loadAllProperties();
+  const updated = [property, ...all.filter((p) => p.id !== property.id)];
+  writeLocal(LOCAL_PROPERTIES_KEY, updated);
+
+  const db = getFirebaseDb();
+  if (db) {
+    try {
+      await ensureAnonymousSession();
+      await setDoc(doc(db, "properties", property.id), {
+        ...property,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn("Property sync to Firestore skipped", err);
+    }
+  }
+  return property;
+}
+
+// ---------------- Deals & Upsells CRUD ---------------- //
+
+export function loadPropertyDeals(propertyId: string): DealItem[] {
+  const key = `${LOCAL_DEALS_PREFIX}${propertyId}`;
+  const stored = readLocal<DealItem[]>(key, []);
+  if (stored.length > 0) return stored;
+  return DEFAULT_DEALS.map((d) => ({ ...d, propertyId }));
+}
+
+export async function savePropertyDeal(propertyId: string, deal: DealItem): Promise<DealItem> {
+  const deals = loadPropertyDeals(propertyId);
+  const exists = deals.some((d) => d.id === deal.id);
+  const updated = exists ? deals.map((d) => (d.id === deal.id ? deal : d)) : [deal, ...deals];
+  writeLocal(`${LOCAL_DEALS_PREFIX}${propertyId}`, updated);
+
+  const db = getFirebaseDb();
+  if (db) {
+    try {
+      await ensureAnonymousSession();
+      await setDoc(doc(db, "properties", propertyId, "deals", deal.id), {
+        ...deal,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn("Deal sync skipped", err);
+    }
+  }
+  return deal;
+}
+
+export async function deletePropertyDeal(propertyId: string, dealId: string): Promise<void> {
+  const deals = loadPropertyDeals(propertyId);
+  const updated = deals.filter((d) => d.id !== dealId);
+  writeLocal(`${LOCAL_DEALS_PREFIX}${propertyId}`, updated);
+}
+
+// ---------------- In-Room Dining Menu CRUD ---------------- //
+
+export function loadPropertyMenu(propertyId: string): MenuItem[] {
+  const key = `${LOCAL_MENU_PREFIX}${propertyId}`;
+  const stored = readLocal<MenuItem[]>(key, []);
+  if (stored.length > 0) return stored;
+  return IN_ROOM_DINING_MENU.map((item) => ({ ...item, propertyId }));
+}
+
+export async function savePropertyMenuItem(propertyId: string, item: MenuItem): Promise<MenuItem> {
+  const menu = loadPropertyMenu(propertyId);
+  const exists = menu.some((m) => m.id === item.id);
+  const updated = exists ? menu.map((m) => (m.id === item.id ? item : m)) : [item, ...menu];
+  writeLocal(`${LOCAL_MENU_PREFIX}${propertyId}`, updated);
+
+  const db = getFirebaseDb();
+  if (db) {
+    try {
+      await ensureAnonymousSession();
+      await setDoc(doc(db, "properties", propertyId, "menu", item.id), {
+        ...item,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn("Menu item sync skipped", err);
+    }
+  }
+  return item;
+}
+
+export async function deletePropertyMenuItem(propertyId: string, itemId: string): Promise<void> {
+  const menu = loadPropertyMenu(propertyId);
+  const updated = menu.filter((m) => m.id !== itemId);
+  writeLocal(`${LOCAL_MENU_PREFIX}${propertyId}`, updated);
+}
+
+// ---------------- Local Places CRUD ---------------- //
+
+export function loadPropertyPlaces(propertyId: string): LocalPlace[] {
+  const key = `${LOCAL_PLACES_PREFIX}${propertyId}`;
+  const stored = readLocal<LocalPlace[]>(key, []);
+  if (stored.length > 0) return stored;
+  return LOCAL_PLACES.map((p) => ({ ...p, propertyId }));
+}
+
+export async function savePropertyPlace(propertyId: string, place: LocalPlace): Promise<LocalPlace> {
+  const places = loadPropertyPlaces(propertyId);
+  const exists = places.some((p) => p.id === place.id);
+  const updated = exists ? places.map((p) => (p.id === place.id ? place : p)) : [place, ...places];
+  writeLocal(`${LOCAL_PLACES_PREFIX}${propertyId}`, updated);
+  return place;
+}
+
+export async function deletePropertyPlace(propertyId: string, placeId: string): Promise<void> {
+  const places = loadPropertyPlaces(propertyId);
+  const updated = places.filter((p) => p.id !== placeId);
+  writeLocal(`${LOCAL_PLACES_PREFIX}${propertyId}`, updated);
 }
 
 export { isFirebaseConfigured, PROPERTY_ID };

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { IN_ROOM_DINING_MENU, MenuItem } from "../../../../shared/airpal-data";
 import { toast } from "sonner";
+import { CompanionSheet } from "./CompanionSheet";
 
 interface Props {
   isOpen: boolean;
@@ -21,7 +22,7 @@ interface Props {
 }
 
 export const InRoomDiningModal: React.FC<Props> = ({ isOpen, onClose }) => {
-  const { roomNumber, cart, addToCart, removeFromCart, clearCart, cartTotal, addStaffTicket } = useAirPal();
+  const { roomNumber, cart, addToCart, removeFromCart, clearCart, cartTotal, addStaffTicket, menuItems } = useAirPal();
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [orderPlaced, setOrderPlaced] = useState<boolean>(false);
 
@@ -29,7 +30,9 @@ export const InRoomDiningModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const categories = ["All", "Starters", "Mains", "Desserts", "Drinks", "Breakfast"];
 
-  const filteredMenu = IN_ROOM_DINING_MENU.filter((item) =>
+  const activeItems = menuItems && menuItems.length > 0 ? menuItems : IN_ROOM_DINING_MENU;
+
+  const filteredMenu = activeItems.filter((item) =>
     selectedCategory === "All" ? true : item.category === selectedCategory
   );
 
@@ -44,8 +47,8 @@ export const InRoomDiningModal: React.FC<Props> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#15241c]/50 backdrop-blur-md animate-in fade-in">
-      <div className="relative flex flex-col w-full max-w-xl max-h-[92vh] rounded-3xl bg-[#fffdf9] border border-amber-400/20 text-[#16211c] shadow-2xl overflow-hidden">
+    <CompanionSheet isOpen={isOpen}>
+      <div className="relative flex flex-col h-full min-h-0 bg-[#fffdf9] text-[#16211c] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#dde3db] bg-[#f7f5ef]">
           <div className="flex items-center gap-3">
@@ -228,6 +231,6 @@ export const InRoomDiningModal: React.FC<Props> = ({ isOpen, onClose }) => {
           </div>
         )}
       </div>
-    </div>
+    </CompanionSheet>
   );
 };

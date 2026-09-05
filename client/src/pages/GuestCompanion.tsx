@@ -73,6 +73,9 @@ export const GuestCompanion: React.FC = () => {
     if (qrType === "dining") setDiningModalOpen(true);
     if (qrType === "experience") setActiveTab("experiences");
     trackEvent("qr_scan", { qrType, roomNumber });
+    const open = new URLSearchParams(window.location.search).get("open");
+    if (open === "trip") setTripModeOpen(true);
+    if (open === "ask") setAskAirPalOpen(true);
   }, [qrType, roomNumber, trackEvent]);
 
   useEffect(() => {
@@ -99,7 +102,7 @@ export const GuestCompanion: React.FC = () => {
   const nowLabel = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
   const content = (
-    <div className={`h-full min-h-0 flex flex-col bg-[#f9f8f4] text-[#16211c] ${seniorMode ? "text-base" : "text-sm"}`}>
+    <div className={`relative h-full min-h-0 flex flex-col overflow-hidden bg-[#f9f8f4] text-[#16211c] ${seniorMode ? "text-base" : "text-sm"}`}>
       <div className="shrink-0 bg-gradient-to-r from-[#fbe8d0] via-[#e7f3ec] to-[#fbe8d0] px-4 py-2 border-b border-[#dde3db] flex items-center justify-between gap-2 text-[11px]">
         <div className="flex items-center gap-1.5 font-medium min-w-0">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />

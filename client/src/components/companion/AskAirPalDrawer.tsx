@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { saveConversation } from "../../lib/airpal-backend";
+import { CompanionSheet } from "./CompanionSheet";
 
 interface Message {
   id: string;
@@ -264,8 +265,8 @@ export const AskAirPalDrawer: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-[#15241c]/45 backdrop-blur-md animate-in fade-in">
-      <div className="relative flex flex-col w-full max-w-lg h-[92vh] max-h-[720px] rounded-3xl bg-[#fffdf9] border border-amber-400/20 text-[#16211c] shadow-2xl overflow-hidden">
+    <CompanionSheet isOpen={isOpen}>
+      <div className="relative flex flex-col h-full min-h-0 bg-[#fffdf9] text-[#16211c] overflow-hidden">
         {/* Top Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#dde3db] bg-[#f7f5ef]">
           <div className="flex items-center gap-3">
@@ -388,6 +389,6 @@ export const AskAirPalDrawer: React.FC<Props> = ({
           </button>
         </div>
       </div>
-    </div>
+    </CompanionSheet>
   );
 };

@@ -28,20 +28,39 @@ export interface PropertyInfo {
     details: string;
     icon: string;
   }[];
+  roomsCount?: number;
+  status?: "active" | "trial" | "suspended";
+  ownerEmail?: string;
+  monthlyRevenue?: number;
+  plan?: "Starter" | "Professional" | "Enterprise";
+}
+
+export type UserRole = "super_admin" | "host_admin" | "staff" | "guest";
+
+export interface UserProfile {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: UserRole;
+  propertyIds?: string[];
+  createdAt?: string;
 }
 
 export interface MenuItem {
   id: string;
+  propertyId?: string;
   name: string;
   category: "Starters" | "Mains" | "Desserts" | "Drinks" | "Breakfast" | "Late Night";
   price: number;
   description: string;
   dietary?: string[];
   popular?: boolean;
+  available?: boolean;
 }
 
 export interface LocalPlace {
   id: string;
+  propertyId?: string;
   name: string;
   category: "Food & Drink" | "Sights & Culture" | "Coffee" | "Nightlife" | "Nature & Walks" | "Family";
   distance: string;
@@ -58,6 +77,7 @@ export interface LocalPlace {
 
 export interface BookableExperience {
   id: string;
+  propertyId?: string;
   title: string;
   category: string;
   price: number;
@@ -71,6 +91,7 @@ export interface BookableExperience {
 
 export interface UpsellItem {
   id: string;
+  propertyId?: string;
   title: string;
   subtitle: string;
   price: number;
@@ -79,8 +100,18 @@ export interface UpsellItem {
   category: "stay" | "dining" | "transport" | "wellness";
 }
 
+export interface DealItem extends UpsellItem {
+  originalPrice?: number;
+  discountBadge?: string;
+  active?: boolean;
+  expiresAt?: string;
+  inventoryLimit?: number;
+  soldCount?: number;
+}
+
 export interface StaffTicket {
   id: string;
+  propertyId?: string;
   roomNumber: string;
   guestName: string;
   category: "reception" | "housekeeping" | "maintenance" | "dining" | "late_checkout";
@@ -115,6 +146,11 @@ export const CURRENT_PROPERTY: PropertyInfo = {
   address: "64 Argyle Street, The Rocks, NSW 2000",
   phone: "+61 2 9251 4000",
   whatsapp: "+61 488 912 345",
+  roomsCount: 84,
+  status: "active",
+  ownerEmail: "marcus@harbourhotelsydney.com.au",
+  monthlyRevenue: 34200,
+  plan: "Professional",
   wifi: {
     network: "HarbourHotel_Guest",
     password: "rockssydney2026",
@@ -136,6 +172,191 @@ export const CURRENT_PROPERTY: PropertyInfo = {
     { name: "Guest Laundry & Steamer", hours: "7:00 AM – 9:00 PM", floor: "Level 3", details: "Self-service Miele washers & dryers, dry cleaning available", icon: "Shirt" },
   ],
 };
+
+export const ALL_PROPERTIES: PropertyInfo[] = [
+  CURRENT_PROPERTY,
+  {
+    id: "bondi-breeze-suites",
+    name: "Bondi Breeze Boutique Suites",
+    tagline: "Coastal Luxury & Ocean Panorama",
+    destination: "Sydney",
+    city: "Bondi Beach",
+    country: "Australia",
+    address: "18 Campbell Parade, Bondi Beach, NSW 2026",
+    phone: "+61 2 9130 8800",
+    whatsapp: "+61 488 234 567",
+    roomsCount: 28,
+    status: "active",
+    ownerEmail: "sophie@bondibreezesuites.com.au",
+    monthlyRevenue: 18400,
+    plan: "Starter",
+    wifi: {
+      network: "BondiBreeze_UltraFast",
+      password: "surfbondi2026",
+      speed: "350 Mbps Fibre",
+    },
+    checkIn: "3:00 PM",
+    checkOut: "11:00 AM",
+    breakfast: {
+      hours: "7:00 AM – 11:00 AM",
+      location: "Ocean Deck Café",
+      type: "Acai Bowls, Organic Sourdough & Specialty Coffee",
+      price: "$24 per person",
+    },
+    facilities: [
+      { name: "Surfboard & Wetsuit Vault", hours: "6:00 AM – 8:00 PM", floor: "Basement", details: "Complimentary custom foamies & beach cruiser bikes", icon: "Waves" },
+      { name: "Rooftop Yoga Terrace", hours: "6:30 AM Sunrise Sessions", floor: "Level 4", details: "Mats and instructor included for all house guests", icon: "Sun" },
+      { name: "Outdoor Saltwater Pool", hours: "7:00 AM – 9:00 PM", floor: "Grounds", details: "Heated year-round with coastal cabanas", icon: "Waves" },
+    ],
+  },
+  {
+    id: "blue-mountains-lodge",
+    name: "The Blue Mountains Heritage Lodge",
+    tagline: "Eucalyptus Mist & Fireside Comfort",
+    destination: "Blue Mountains",
+    city: "Katoomba",
+    country: "Australia",
+    address: "42 Cliff Drive, Katoomba, NSW 2780",
+    phone: "+61 2 4782 1100",
+    whatsapp: "+61 488 789 012",
+    roomsCount: 16,
+    status: "active",
+    ownerEmail: "edward@heritagebluemountains.com",
+    monthlyRevenue: 9800,
+    plan: "Starter",
+    wifi: {
+      network: "HeritageLodge_Guest",
+      password: "three_sisters_mist",
+      speed: "150 Mbps Starlink",
+    },
+    checkIn: "2:00 PM",
+    checkOut: "10:30 AM",
+    breakfast: {
+      hours: "7:30 AM – 10:00 AM",
+      location: "The Great Hearth Dining Room",
+      type: "Country Farmhouse Cooked Breakfast & Local Berry Compote",
+      price: "$26 included in select rates",
+    },
+    facilities: [
+      { name: "Library & Whiskey Lounge", hours: "12:00 PM – Midnight", floor: "Main Hall", details: "Log fireplace with over 80 single malt selections", icon: "BookOpen" },
+      { name: "Cedar Wood Hot Tubs", hours: "8:00 AM – 10:00 PM", floor: "Garden Walk", details: "Private forest-view cedar spas bookable by the hour", icon: "Bath" },
+    ],
+  },
+];
+
+export const DEMO_USERS: UserProfile[] = [
+  {
+    uid: "u-superadmin",
+    email: "admin@airpal.me",
+    displayName: "Elena Vance (Platform Director)",
+    role: "super_admin",
+    propertyIds: ["harbour-hotel", "bondi-breeze-suites", "blue-mountains-lodge"],
+    createdAt: "2026-01-10",
+  },
+  {
+    uid: "u-host",
+    email: "host@harbourhotel.com.au",
+    displayName: "Marcus Sterling (Harbour Hotel Owner)",
+    role: "host_admin",
+    propertyIds: ["harbour-hotel"],
+    createdAt: "2026-02-01",
+  },
+  {
+    uid: "u-staff",
+    email: "staff@harbourhotel.com.au",
+    displayName: "Liam Chen (Front Desk Duty Manager)",
+    role: "staff",
+    propertyIds: ["harbour-hotel"],
+    createdAt: "2026-02-15",
+  },
+  {
+    uid: "u-guest",
+    email: "guest@airpal.me",
+    displayName: "Bibin Jose (Room 508)",
+    role: "guest",
+    propertyIds: ["harbour-hotel"],
+    createdAt: "2026-03-01",
+  },
+];
+
+export const DEFAULT_DEALS: DealItem[] = [
+  {
+    id: "deal_sunset_cruise",
+    propertyId: "harbour-hotel",
+    title: "Exclusive Sunset Sailing & Champagne Special",
+    subtitle: "2-hour luxury catamaran cruise with free-flowing Veuve Clicquot and Sydney Rock Oysters.",
+    price: 95,
+    originalPrice: 140,
+    discountBadge: "Save 32%",
+    badge: "Limited Daily Deal",
+    iconName: "Compass",
+    category: "wellness",
+    active: true,
+    inventoryLimit: 6,
+    soldCount: 4,
+    expiresAt: "Tonight 6:00 PM",
+  },
+  {
+    id: "deal_late_checkout",
+    propertyId: "harbour-hotel",
+    title: "VIP Guaranteed 4:00 PM Late Check-out",
+    subtitle: "Keep your room and shower before your evening flight. Normal check-out is 10:00 AM.",
+    price: 45,
+    originalPrice: 65,
+    discountBadge: "Save $20",
+    badge: "Best Seller",
+    iconName: "Clock",
+    category: "stay",
+    active: true,
+    inventoryLimit: 10,
+    soldCount: 8,
+  },
+  {
+    id: "deal_artisan_breakfast",
+    propertyId: "harbour-hotel",
+    title: "Artisan Buffet & Barista Coffee Pre-book",
+    subtitle: "Unlimited gourmet hot breakfast, Sonoma pastries, and specialty barista coffee.",
+    price: 22,
+    originalPrice: 28,
+    discountBadge: "Save $6/day",
+    badge: "Breakfast Deal",
+    iconName: "Coffee",
+    category: "dining",
+    active: true,
+    inventoryLimit: 50,
+    soldCount: 34,
+  },
+  {
+    id: "deal_airport_chauffeur",
+    propertyId: "harbour-hotel",
+    title: "Private Executive Airport Chauffeur",
+    subtitle: "Mercedes E-Class sedan direct from hotel lobby to Sydney Airport terminal with luggage assist.",
+    price: 65,
+    originalPrice: 85,
+    discountBadge: "Fixed Fare",
+    badge: "Stress-Free",
+    iconName: "Car",
+    category: "transport",
+    active: true,
+    inventoryLimit: 8,
+    soldCount: 3,
+  },
+  {
+    id: "deal_spa_remedial",
+    propertyId: "harbour-hotel",
+    title: "60-Min In-Room Organic Remedial Massage",
+    subtitle: "Certified therapist brings organic aromatic oils and heated stone treatment to your room.",
+    price: 125,
+    originalPrice: 160,
+    discountBadge: "Save $35",
+    badge: "Wellness Treat",
+    iconName: "Sparkles",
+    category: "wellness",
+    active: true,
+    inventoryLimit: 4,
+    soldCount: 2,
+  },
+];
 
 export const IN_ROOM_DINING_MENU: MenuItem[] = [
   { id: "m1", name: "Harbour Wagyu Smash Burger", category: "Mains", price: 26, description: "Double grass-fed patty, aged cheddar, pickles, smoked aioli on milk bun with truffle fries", dietary: ["Halal available"], popular: true },

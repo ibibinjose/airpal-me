@@ -3,11 +3,15 @@ import { Route, Switch, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { AuthProvider } from "./contexts/AuthContext";
 import { AirPalProvider, useAirPal, type QrType } from "./contexts/AirPalContext";
 import { DeviceFrameSwitcher } from "./components/DeviceFrameSwitcher";
 import { GuestCompanion } from "./pages/GuestCompanion";
 import { HostDashboard } from "./pages/HostDashboard";
+import { SuperAdminDashboard } from "./pages/SuperAdminDashboard";
+import { AuthPage } from "./pages/AuthPage";
 import Home from "./pages/Home";
+import { SharedTrip } from "./pages/SharedTrip";
 import { isNativeShell } from "./lib/platform";
 
 function parseQrType(value: string | null): QrType | null {
@@ -17,14 +21,17 @@ function parseQrType(value: string | null): QrType | null {
   return null;
 }
 
-function GuestRoute() {
-  const { setQrType, setRoomNumber, setDeviceMode } = useAirPal();
+function GuestRoute({ params }: { params?: { propertyId?: string } }) {
+  const { setQrType, setRoomNumber, setDeviceMode, setPropertyId } = useAirPal();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const qr = parseQrType(params.get("type"));
-    const room = params.get("room");
-    const frame = params.get("frame");
+    if (params?.propertyId) {
+      setPropertyId(params.propertyId);
+    }
+    const searchParams = new URLSearchParams(window.location.search);
+    const qr = parseQrType(searchParams.get("type"));
+    const room = searchParams.get("room");
+    const frame = searchParams.get("frame");
     if (qr) setQrType(qr);
     if (room) setRoomNumber(room);
     if (isNativeShell()) {
@@ -32,7 +39,7 @@ function GuestRoute() {
     } else if (frame === "iphone" || frame === "android" || frame === "tablet" || frame === "responsive") {
       setDeviceMode(frame);
     }
-  }, [setQrType, setRoomNumber, setDeviceMode]);
+  }, [params?.propertyId, setPropertyId, setQrType, setRoomNumber, setDeviceMode]);
 
   return <GuestCompanion />;
 }
@@ -40,21 +47,25 @@ function GuestRoute() {
 function MainApp() {
   const [location, setLocation] = useLocation();
   const native = isNativeShell();
-  const showChrome = !native;
+  const showChrome = !native && !location.startsWith("/trip");
 
-  const activeView = location.startsWith("/host")
+  const activeView = location.startsWith("/admin")
+    ? "admin"
+    : location.startsWith("/auth")
+    ? "auth"
+    : location.startsWith("/host")
     ? "dashboard"
     : location.startsWith("/stay") || location.startsWith("/g/")
-      ? "companion"
-      : native
-        ? "companion"
-        : "landing";
+    ? "companion"
+    : native
+    ? "companion"
+    : "landing";
 
   useEffect(() => {
     if (native && location === "/") setLocation("/stay");
   }, [native, location, setLocation]);
 
-  const lockViewport = activeView === "companion";
+  const lockViewport = activeView === "companion" || location.startsWith("/trip");
 
   return (
     <div className={`flex flex-col bg-[#f9f8f4] text-[#16211c] font-sans antialiased ${lockViewport ? "h-dvh overflow-hidden" : "min-h-dvh"}`}>
@@ -64,15 +75,20 @@ function MainApp() {
           onViewChange={(view) => {
             if (view === "companion") setLocation("/stay");
             else if (view === "dashboard") setLocation("/host");
+            else if (view === "admin") setLocation("/admin");
+            else if (view === "auth") setLocation("/auth");
             else setLocation("/");
           }}
         />
       )}
       <div className={lockViewport ? "flex-1 min-h-0 overflow-hidden" : "flex-1"}>
         <Switch>
+          <Route path="/admin" component={SuperAdminDashboard} />
+          <Route path="/auth" component={AuthPage} />
           <Route path="/host" component={HostDashboard} />
           <Route path="/stay" component={GuestRoute} />
           <Route path="/g/:propertyId" component={GuestRoute} />
+          <Route path="/trip/:tripId" component={SharedTrip} />
           <Route path="/">{native ? <GuestRoute /> : <Home />}</Route>
         </Switch>
       </div>
@@ -83,12 +99,14 @@ function MainApp() {
 function App() {
   return (
     <ErrorBoundary>
-      <AirPalProvider>
-        <TooltipProvider>
-          <Toaster richColors position="top-right" />
-          <MainApp />
-        </TooltipProvider>
-      </AirPalProvider>
+      <AuthProvider>
+        <AirPalProvider>
+          <TooltipProvider>
+            <Toaster richColors position="top-right" />
+            <MainApp />
+          </TooltipProvider>
+        </AirPalProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

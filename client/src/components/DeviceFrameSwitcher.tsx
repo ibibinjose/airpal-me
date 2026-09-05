@@ -12,14 +12,18 @@ import {
   QrCode,
   Hotel,
   Sparkles,
+  ShieldCheck,
+  User,
 } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 interface Props {
-  activeView: "companion" | "dashboard" | "landing";
-  onViewChange: (view: "companion" | "dashboard" | "landing") => void;
+  activeView: "companion" | "dashboard" | "landing" | "admin" | "auth";
+  onViewChange: (view: "companion" | "dashboard" | "landing" | "admin" | "auth") => void;
 }
 
 export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange }) => {
+  const { user, role } = useAuth();
   const {
     deviceMode,
     setDeviceMode,
@@ -43,7 +47,10 @@ export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange 
         <div className="flex flex-wrap items-center justify-between gap-2">
         {/* Left: Brand & Main Navigation Toggle */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-          <div className="flex items-center gap-1.5 font-bold tracking-tight text-sm">
+          <div
+            onClick={() => onViewChange("landing")}
+            className="flex items-center gap-1.5 font-bold tracking-tight text-sm cursor-pointer"
+          >
             <span className="grid place-items-center w-6 h-6 rounded-md bg-gradient-to-br from-amber-400 to-amber-600 text-stone-900 text-xs shadow-sm shadow-amber-500/20">
               ✦
             </span>
@@ -71,20 +78,43 @@ export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange 
               }`}
             >
               <Hotel size={13} />
-              <span>Hotel Host CMS</span>
+              <span>Host Business CMS</span>
             </button>
             <button
-              onClick={() => onViewChange("landing")}
+              onClick={() => onViewChange("admin")}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all ${
-                activeView === "landing"
-                  ? "bg-amber-400 text-stone-950 font-semibold shadow"
-                  : "text-[#5a6b62] hover:text-[#16211c]"
+                activeView === "admin"
+                  ? "bg-purple-600 text-white font-semibold shadow"
+                  : "text-purple-800 hover:text-purple-950 hover:bg-purple-50"
               }`}
             >
-              <Sparkles size={13} />
-              <span>Platform Story</span>
+              <ShieldCheck size={13} />
+              <span>Super Admin</span>
             </button>
           </nav>
+        </div>
+
+        {/* Right: Active Role Persona & Switcher */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onViewChange("auth")}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white hover:bg-stone-50 border border-[#dde3db] text-[11px] text-[#16211c] transition-all"
+            title="Click to Switch Demo Role or Login"
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                role === "super_admin"
+                  ? "bg-purple-500"
+                  : role === "host_admin"
+                  ? "bg-amber-500"
+                  : role === "staff"
+                  ? "bg-blue-500"
+                  : "bg-emerald-500"
+              }`}
+            />
+            <span className="font-semibold">{user?.displayName?.split(" ")[0] || "Guest"}</span>
+            <span className="text-[10px] text-stone-400 font-mono capitalize">({role.replace("_", " ")})</span>
+          </button>
         </div>
 
         </div>

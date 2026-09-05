@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { WHAT_TO_DO_NOW_RECOMMENDATIONS } from "../../../../shared/airpal-data";
 import { toast } from "sonner";
+import { CompanionSheet } from "./CompanionSheet";
 
 interface Props {
   isOpen: boolean;
@@ -71,8 +72,8 @@ export const WhatToDoNowModal: React.FC<Props> = ({ isOpen, onClose, onOpenTripM
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#15241c]/45 backdrop-blur-md animate-in fade-in">
-      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-[#fffdf9] border border-amber-400/20 p-5 sm:p-7 text-[#16211c] shadow-2xl">
+    <CompanionSheet isOpen={isOpen}>
+      <div className="relative h-full min-h-0 guest-scroll bg-[#fffdf9] p-5 text-[#16211c]">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
@@ -204,6 +205,6 @@ export const WhatToDoNowModal: React.FC<Props> = ({ isOpen, onClose, onOpenTripM
           </button>
         </div>
       </div>
-    </div>
+    </CompanionSheet>
   );
 };

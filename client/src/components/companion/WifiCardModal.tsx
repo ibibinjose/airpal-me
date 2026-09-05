@@ -2,6 +2,7 @@ import React from "react";
 import { useAirPal } from "../../contexts/AirPalContext";
 import { Wifi, Copy, Check, X, QrCode, ShieldCheck, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { CompanionSheet } from "./CompanionSheet";
 
 interface Props {
   isOpen: boolean;
@@ -24,7 +25,7 @@ export const WifiCardModal: React.FC<Props> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#15241c]/40 backdrop-blur-sm animate-in fade-in">
+    <CompanionSheet isOpen={isOpen} variant="card">
       <div className="relative w-full max-w-sm rounded-3xl bg-[#fffdf9] border border-[#dde3db] p-6 text-[#16211c] shadow-2xl">
         <button
           onClick={onClose}
@@ -84,6 +85,6 @@ export const WifiCardModal: React.FC<Props> = ({ isOpen, onClose }) => {
           </span>
         </div>
       </div>
-    </div>
+    </CompanionSheet>
   );
 };
