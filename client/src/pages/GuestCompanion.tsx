@@ -75,10 +75,23 @@ export const GuestCompanion: React.FC = () => {
     trackEvent("qr_scan", { qrType, roomNumber });
   }, [qrType, roomNumber, trackEvent]);
 
+  useEffect(() => {
+    if (familyMode && placeCategory === "Nightlife") setPlaceCategory("All");
+  }, [familyMode, placeCategory]);
+
+  const scanLabel =
+    qrType === "room"
+      ? `Room ${roomNumber}`
+      : qrType === "property"
+        ? "Lobby"
+        : qrType === "dining"
+          ? "Restaurant"
+          : qrType === "experience"
+            ? "Experience"
+            : "Safety";
+
   const filteredPlaces = places.filter((p) => {
-    if (familyMode && p.category !== "Family" && p.category !== "Nature & Walks" && p.category !== "Sights & Culture") {
-      return false;
-    }
+    if (familyMode && p.category === "Nightlife") return false;
     if (placeCategory === "All") return true;
     return p.category === placeCategory;
   });
@@ -86,12 +99,12 @@ export const GuestCompanion: React.FC = () => {
   const nowLabel = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
   const content = (
-    <div className={`relative min-h-full flex flex-col bg-[#f9f8f4] text-[#16211c] ${seniorMode ? "text-base" : "text-sm"} select-none`}>
-      <div className="bg-gradient-to-r from-[#fbe8d0] via-[#e7f3ec] to-[#fbe8d0] px-4 py-2 border-b border-[#dde3db] flex items-center justify-between text-[11px]">
-        <div className="flex items-center gap-1.5 font-medium">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[#5a6b62]">{property.name}</span>
-          <span className="text-[#16211c] font-semibold">· Room {roomNumber}</span>
+    <div className={`h-full min-h-0 flex flex-col bg-[#f9f8f4] text-[#16211c] ${seniorMode ? "text-base" : "text-sm"}`}>
+      <div className="shrink-0 bg-gradient-to-r from-[#fbe8d0] via-[#e7f3ec] to-[#fbe8d0] px-4 py-2 border-b border-[#dde3db] flex items-center justify-between gap-2 text-[11px]">
+        <div className="flex items-center gap-1.5 font-medium min-w-0">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span className="text-[#5a6b62] truncate">{property.name}</span>
+          <span className="text-[#16211c] font-semibold shrink-0">· {scanLabel}</span>
         </div>
         <div className="flex items-center gap-2">
           {weather === "rainy" ? (
@@ -106,7 +119,7 @@ export const GuestCompanion: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-28 px-4 pt-4 space-y-5">
+      <div className="guest-scroll flex-1 px-3 sm:px-4 pt-3 pb-4 space-y-4">
         <section className="space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono tracking-wider uppercase text-[#c57a32]">
@@ -120,7 +133,7 @@ export const GuestCompanion: React.FC = () => {
           <p className="text-xs text-[#5a6b62]">{property.tagline}</p>
         </section>
 
-        <section className="grid grid-cols-4 gap-2">
+        <section className="grid grid-cols-4 gap-1.5 sm:gap-2">
           {[
             { label: "Wi-Fi", hint: "Connected", icon: Wifi, tone: "bg-[#f8e4c8] text-[#c57a32]", onClick: () => setWifiModalOpen(true) },
             { label: "Order Food", hint: "Room Menu", icon: Utensils, tone: "bg-[#dceee4] text-[#2d7a55]", onClick: () => setDiningModalOpen(true) },
@@ -132,32 +145,32 @@ export const GuestCompanion: React.FC = () => {
               <button
                 key={action.label}
                 onClick={action.onClick}
-                className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white hover:bg-[#f3f6f1] border border-[#dde3db] shadow-[0_8px_18px_#5d765b0d] transition-all active:scale-95"
+                className="flex flex-col items-center justify-center min-w-0 p-2 sm:p-2.5 rounded-2xl bg-white hover:bg-[#f3f6f1] border border-[#dde3db] shadow-[0_8px_18px_#5d765b0d] transition-all active:scale-95"
               >
-                <div className={`grid place-items-center w-9 h-9 rounded-xl mb-1.5 ${action.tone}`}>
-                  <Icon size={18} />
+                <div className={`grid place-items-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl mb-1 ${action.tone}`}>
+                  <Icon size={16} />
                 </div>
-                <span className="text-[11px] font-medium text-[#16211c]">{action.label}</span>
-                <span className="text-[9px] text-[#7a877f] font-mono">{action.hint}</span>
+                <span className="text-[10px] sm:text-[11px] font-medium text-[#16211c] text-center leading-tight">{action.label}</span>
+                <span className="text-[8px] sm:text-[9px] text-[#7a877f] font-mono">{action.hint}</span>
               </button>
             );
           })}
         </section>
 
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#fde9c8] via-[#fff8ee] to-[#e5f3ea] border border-[#f0d4a8] p-5 shadow-[0_16px_32px_#c9a06a18]">
-          <div className="flex items-start justify-between gap-3 mb-3">
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#fde9c8] via-[#fff8ee] to-[#e5f3ea] border border-[#f0d4a8] p-4 shadow-[0_16px_32px_#c9a06a18]">
+          <div className="flex items-start justify-between gap-3 mb-2">
             <div>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/80 border border-[#f0d4a8] text-[#c57a32] text-[10px] font-mono tracking-wider uppercase font-semibold">
                 <Sparkles size={11} /> AirPal Signature
               </span>
-              <h2 className={`font-bold text-[#16211c] mt-1.5 ${seniorMode ? "text-2xl" : "text-xl"}`}>
+              <h2 className={`font-bold text-[#16211c] mt-1 leading-tight ${seniorMode ? "text-xl" : "text-lg"}`}>
                 {t("whatToDoNow")}
               </h2>
             </div>
-            <span className="text-[11px] font-mono text-[#7a877f]">{nowLabel}</span>
+            <span className="text-[11px] font-mono text-[#7a877f] shrink-0">{nowLabel}</span>
           </div>
-          <p className="text-xs text-[#5a6b62] mb-4 leading-relaxed max-w-xs">
-            AirPal reads your time, weather, and walk from {property.name} to serve 3 curated options.
+          <p className="text-xs text-[#5a6b62] mb-3 leading-relaxed">
+            Time, weather, and a short walk from {property.name} — three options, ready now.
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -165,14 +178,14 @@ export const GuestCompanion: React.FC = () => {
                 trackEvent("what_to_do_now_open");
                 setWhatToDoModalOpen(true);
               }}
-              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-[#18271f] hover:bg-[#284236] active:scale-98 text-[#fffdf8] font-bold text-xs transition-all shadow-md"
+              className="flex-1 min-w-0 flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl bg-[#18271f] hover:bg-[#284236] active:scale-98 text-[#fffdf8] font-bold text-xs transition-all shadow-md"
             >
-              <span>See 3 Instant Options</span>
+              <span>See 3 options</span>
               <ArrowRight size={14} />
             </button>
             <button
               onClick={() => setTripModeOpen(true)}
-              className="flex items-center gap-1.5 py-3 px-3.5 rounded-2xl bg-white hover:bg-[#f3f6f1] active:scale-98 text-[#254137] text-xs font-semibold transition-all border border-[#dde3db]"
+              className="flex items-center gap-1.5 py-2.5 px-3 rounded-2xl bg-white hover:bg-[#f3f6f1] active:scale-98 text-[#254137] text-xs font-semibold transition-all border border-[#dde3db] shrink-0"
             >
               <Compass size={14} />
               <span>Trip Mode</span>
@@ -198,27 +211,26 @@ export const GuestCompanion: React.FC = () => {
           <ChevronRight size={16} className="text-[#7a877f] group-hover:translate-x-0.5 transition-transform" />
         </section>
 
-        <div className="flex rounded-2xl bg-white border border-[#dde3db] p-1 text-xs shadow-[0_8px_18px_#5d765b0d]">
+        <div className="flex rounded-2xl bg-white border border-[#dde3db] p-1 text-[11px] shadow-[0_8px_18px_#5d765b0d]">
           {[
-            { id: "stay", label: t("yourStay"), icon: BedDouble },
-            { id: "discover", label: "Local Gems", icon: MapPin },
-            { id: "experiences", label: t("experiences"), icon: CalendarDays },
-            { id: "services", label: t("hotelServices"), icon: BellRing },
+            { id: "stay", label: "Stay", icon: BedDouble },
+            { id: "discover", label: "Local", icon: MapPin },
+            { id: "experiences", label: "Tours", icon: CalendarDays },
+            { id: "services", label: "Hotel", icon: BellRing },
           ].map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all font-medium ${
+                className={`flex-1 min-w-0 flex items-center justify-center gap-1 py-2 rounded-xl transition-all font-medium ${
                   activeTab === tab.id
                     ? "bg-[#18271f] text-[#fffdf8] font-semibold shadow-sm"
                     : "text-[#7a877f] hover:text-[#16211c]"
                 }`}
               >
-                <Icon size={13} />
-                <span className="hidden sm:inline">{tab.label}</span>
-                <span className="sm:hidden">{tab.label.split(" ")[0]}</span>
+                <Icon size={13} className="shrink-0" />
+                <span className="truncate">{tab.label}</span>
               </button>
             );
           })}
@@ -317,8 +329,13 @@ export const GuestCompanion: React.FC = () => {
 
         {activeTab === "discover" && (
           <section className="space-y-4 animate-in fade-in">
+            {familyMode && (
+              <div className="rounded-xl bg-[#e7f4ec] border border-[#cfe6da] px-3 py-2 text-[11px] text-[#2d7a55]">
+                Family mode is on — nightlife is hidden, and walks, culture, and food stay front and centre.
+              </div>
+            )}
             <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
-              {["All", "Food & Drink", "Coffee", "Nature & Walks", "Sights & Culture", "Nightlife"].map((cat) => (
+              {["All", "Food & Drink", "Coffee", "Nature & Walks", "Sights & Culture", ...(familyMode ? [] : ["Nightlife"])].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setPlaceCategory(cat)}
@@ -333,6 +350,11 @@ export const GuestCompanion: React.FC = () => {
               ))}
             </div>
             <div className="space-y-3">
+              {filteredPlaces.length === 0 && (
+                <div className="rounded-2xl bg-white border border-[#dde3db] p-4 text-xs text-[#5a6b62]">
+                  No places in this category right now. Try another filter or turn off Family mode.
+                </div>
+              )}
               {filteredPlaces.map((place) => {
                 const isSaved = savedPlaces.includes(place.id);
                 return (
@@ -521,7 +543,7 @@ export const GuestCompanion: React.FC = () => {
         )}
       </div>
 
-      <nav className="absolute bottom-0 left-0 right-0 z-30 border-t border-[#dde3db] bg-[#fffdf9]/95 backdrop-blur-xl py-2 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around text-[10px] text-[#7a877f]">
+      <nav className="shrink-0 z-30 border-t border-[#dde3db] bg-[#fffdf9]/95 backdrop-blur-xl py-2 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around text-[10px] text-[#7a877f]">
         <button onClick={() => setActiveTab("stay")} className={`flex flex-col items-center gap-1 transition-all ${activeTab === "stay" ? "text-[#c57a32] font-bold" : "hover:text-[#16211c]"}`}>
           <BedDouble size={18} />
           <span>Stay</span>
@@ -562,46 +584,46 @@ export const GuestCompanion: React.FC = () => {
     </div>
   );
 
+  const frameStage = (frame: React.ReactNode) => (
+    <div className="h-full min-h-0 overflow-hidden bg-[#e8eee8] flex items-center justify-center p-3 sm:p-4">
+      {frame}
+    </div>
+  );
+
   if (deviceMode === "iphone") {
-    return (
-      <div className="min-h-[calc(100vh-52px)] py-6 px-2 flex justify-center items-center bg-[#e8eee8]">
-        <div className="relative w-[385px] h-[810px] rounded-[52px] border-[10px] border-[#202d26] bg-[#f9f8f4] shadow-[20px_28px_70px_#5d765b2c] overflow-hidden flex flex-col">
-          <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-28 h-6 bg-[#111] rounded-full z-50 flex items-center justify-between px-2.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#222] border border-white/10" />
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          </div>
-          <div className="flex-1 overflow-hidden pt-6">{content}</div>
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-[#16211c]/20 rounded-full z-50 pointer-events-none" />
+    return frameStage(
+      <div className="relative w-[min(385px,100%)] h-full max-h-[810px] rounded-[52px] border-[10px] border-[#202d26] bg-[#f9f8f4] shadow-[20px_28px_70px_#5d765b2c] overflow-hidden flex flex-col">
+        <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-28 h-6 bg-[#111] rounded-full z-50 flex items-center justify-between px-2.5 pointer-events-none">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#222] border border-white/10" />
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
         </div>
+        <div className="flex-1 min-h-0 overflow-hidden pt-7">{content}</div>
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-[#16211c]/20 rounded-full z-50 pointer-events-none" />
       </div>
     );
   }
 
   if (deviceMode === "android") {
-    return (
-      <div className="min-h-[calc(100vh-52px)] py-6 px-2 flex justify-center items-center bg-[#e8eee8]">
-        <div className="relative w-[380px] h-[810px] rounded-[40px] border-[8px] border-[#252f28] bg-[#f9f8f4] shadow-[20px_28px_70px_#5d765b2c] overflow-hidden flex flex-col">
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-[#111] rounded-full z-50" />
-          <div className="flex-1 overflow-hidden pt-5">{content}</div>
-          <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-20 h-1 bg-[#16211c]/25 rounded-full z-50 pointer-events-none" />
-        </div>
+    return frameStage(
+      <div className="relative w-[min(380px,100%)] h-full max-h-[810px] rounded-[40px] border-[8px] border-[#252f28] bg-[#f9f8f4] shadow-[20px_28px_70px_#5d765b2c] overflow-hidden flex flex-col">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-[#111] rounded-full z-50 pointer-events-none" />
+        <div className="flex-1 min-h-0 overflow-hidden pt-6">{content}</div>
+        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-20 h-1 bg-[#16211c]/25 rounded-full z-50 pointer-events-none" />
       </div>
     );
   }
 
   if (deviceMode === "tablet") {
-    return (
-      <div className="min-h-[calc(100vh-52px)] py-6 px-2 flex justify-center items-center bg-[#e8eee8]">
-        <div className="relative w-[680px] h-[850px] rounded-[36px] border-[14px] border-[#1e2621] bg-[#f9f8f4] shadow-[20px_28px_70px_#5d765b2c] overflow-hidden flex flex-col">
-          <div className="flex-1 overflow-hidden">{content}</div>
-        </div>
+    return frameStage(
+      <div className="relative w-[min(680px,100%)] h-full max-h-[850px] rounded-[36px] border-[14px] border-[#1e2621] bg-[#f9f8f4] shadow-[20px_28px_70px_#5d765b2c] overflow-hidden flex flex-col">
+        <div className="flex-1 min-h-0 overflow-hidden">{content}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-52px)] bg-[#e8eee8] flex justify-center">
-      <div className="w-full max-w-[440px] min-h-[calc(100vh-52px)] bg-[#f9f8f4] shadow-2xl">{content}</div>
+    <div className="h-full min-h-0 bg-[#e8eee8] flex justify-center">
+      <div className="w-full max-w-[440px] h-full min-h-0 bg-[#f9f8f4] shadow-2xl">{content}</div>
     </div>
   );
 };

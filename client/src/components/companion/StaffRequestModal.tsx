@@ -40,9 +40,9 @@ export const StaffRequestModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#15241c]/50 backdrop-blur-md animate-in fade-in">
-      <div className="relative flex flex-col w-full max-w-lg max-h-[92vh] rounded-3xl bg-[#121c16] border border-amber-400/20 text-[#16211c] shadow-2xl overflow-hidden">
+      <div className="relative flex flex-col w-full max-w-lg max-h-[92vh] rounded-3xl bg-[#fffdf9] border border-amber-400/20 text-[#16211c] shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#dde3db] bg-[#16241b]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#dde3db] bg-[#f7f5ef]">
           <div className="flex items-center gap-3">
             <div className="grid place-items-center w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-stone-950 font-bold shadow-md shadow-amber-400/20">
               <BellRing size={20} />

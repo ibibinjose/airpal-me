@@ -24,9 +24,14 @@ function GuestRoute() {
     const params = new URLSearchParams(window.location.search);
     const qr = parseQrType(params.get("type"));
     const room = params.get("room");
+    const frame = params.get("frame");
     if (qr) setQrType(qr);
     if (room) setRoomNumber(room);
-    if (isNativeShell()) setDeviceMode("responsive");
+    if (isNativeShell()) {
+      setDeviceMode("responsive");
+    } else if (frame === "iphone" || frame === "android" || frame === "tablet" || frame === "responsive") {
+      setDeviceMode(frame);
+    }
   }, [setQrType, setRoomNumber, setDeviceMode]);
 
   return <GuestCompanion />;
@@ -49,8 +54,10 @@ function MainApp() {
     if (native && location === "/") setLocation("/stay");
   }, [native, location, setLocation]);
 
+  const lockViewport = activeView === "companion";
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#f9f8f4] text-[#16211c] font-sans antialiased">
+    <div className={`flex flex-col bg-[#f9f8f4] text-[#16211c] font-sans antialiased ${lockViewport ? "h-dvh overflow-hidden" : "min-h-dvh"}`}>
       {showChrome && (
         <DeviceFrameSwitcher
           activeView={activeView}
@@ -61,7 +68,7 @@ function MainApp() {
           }}
         />
       )}
-      <div className="flex-1">
+      <div className={lockViewport ? "flex-1 min-h-0 overflow-hidden" : "flex-1"}>
         <Switch>
           <Route path="/host" component={HostDashboard} />
           <Route path="/stay" component={GuestRoute} />

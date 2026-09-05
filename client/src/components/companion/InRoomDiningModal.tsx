@@ -45,9 +45,9 @@ export const InRoomDiningModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#15241c]/50 backdrop-blur-md animate-in fade-in">
-      <div className="relative flex flex-col w-full max-w-xl max-h-[92vh] rounded-3xl bg-[#121b15] border border-amber-400/20 text-[#16211c] shadow-2xl overflow-hidden">
+      <div className="relative flex flex-col w-full max-w-xl max-h-[92vh] rounded-3xl bg-[#fffdf9] border border-amber-400/20 text-[#16211c] shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#dde3db] bg-[#16241b]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#dde3db] bg-[#f7f5ef]">
           <div className="flex items-center gap-3">
             <div className="grid place-items-center w-10 h-10 rounded-2xl bg-amber-400 text-stone-950 font-bold shadow-md shadow-amber-400/20">
               <Utensils size={20} />
@@ -171,14 +171,14 @@ export const InRoomDiningModal: React.FC<Props> = ({ isOpen, onClose }) => {
                         <div className="flex items-center gap-1.5 bg-[#f8e4c8] border border-amber-400/30 rounded-xl p-1 text-xs text-[#c57a32]">
                           <button
                             onClick={() => removeFromCart(item.id)}
-                            className="p-1 hover:bg-amber-400/30 rounded-lg text-amber-200"
+                            className="p-1 hover:bg-amber-400/30 rounded-lg text-[#c57a32]"
                           >
                             <Minus size={12} />
                           </button>
                           <span className="font-mono font-bold px-1.5">{inCart.quantity}</span>
                           <button
                             onClick={() => addToCart(item)}
-                            className="p-1 hover:bg-amber-400/30 rounded-lg text-amber-200"
+                            className="p-1 hover:bg-amber-400/30 rounded-lg text-[#c57a32]"
                           >
                             <Plus size={12} />
                           </button>

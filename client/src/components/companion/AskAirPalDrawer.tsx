@@ -318,7 +318,7 @@ export const AskAirPalDrawer: React.FC<Props> = ({
                       <button
                         key={idx}
                         onClick={btn.action}
-                        className="flex items-center justify-between w-full px-3 py-2 rounded-xl bg-[#f8ead4] hover:bg-amber-400 text-amber-200 hover:text-stone-950 text-xs font-semibold transition-all border border-amber-400/30 active:scale-98"
+                        className="flex items-center justify-between w-full px-3 py-2 rounded-xl bg-[#f8ead4] hover:bg-amber-400 text-[#c57a32] hover:text-stone-950 text-xs font-semibold transition-all border border-amber-400/30 active:scale-98"
                       >
                         <span className="text-left">{btn.label}</span>
                         <ArrowRight size={13} className="flex-shrink-0 ml-2" />

@@ -174,7 +174,7 @@ export const TripModeModal: React.FC<Props> = ({ isOpen, onClose }) => {
             className={`rounded-2xl p-3.5 border flex items-center justify-between gap-3 text-xs transition-all ${
               weather === "rainy"
                 ? "bg-blue-500/15 border-blue-400/30 text-[#1d6aa5]"
-                : "bg-amber-400/10 border-amber-400/20 text-amber-200"
+                : "bg-[#fff4e4] border-amber-400/20 text-[#c57a32]"
             }`}
           >
             <div className="flex items-center gap-2.5">
