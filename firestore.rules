@@ -5,6 +5,15 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    match /trips/{tripId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /users/{userId} {
+      allow read, write: if isSignedIn();
+    }
+
     match /properties/{propertyId} {
       allow read: if true;
       allow write: if isSignedIn();

@@ -35,6 +35,9 @@ android/app/build/
 ehthumbs.db
 Thumbs.db
 
+# Agent / local screenshots
+.manus-logs/
+
 # Logs
 logs
 *.log

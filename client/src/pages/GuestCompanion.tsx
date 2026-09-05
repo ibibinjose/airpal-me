@@ -37,7 +37,7 @@ import { StaffRequestModal } from "../components/companion/StaffRequestModal";
 import { toast } from "sonner";
 import { HOTEL_EVENTS, TRANSPORT_OPTIONS } from "../../../shared/airpal-data";
 
-export const GuestCompanion: React.FC = () => {
+export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) => {
   const {
     property,
     roomNumber,
@@ -546,7 +546,7 @@ export const GuestCompanion: React.FC = () => {
         )}
       </div>
 
-      <nav className="shrink-0 z-30 border-t border-[#dde3db] bg-[#fffdf9]/95 backdrop-blur-xl py-2 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around text-[10px] text-[#7a877f]">
+      {!bare && <nav className="shrink-0 z-30 border-t border-[#dde3db] bg-[#fffdf9]/95 backdrop-blur-xl py-2 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around text-[10px] text-[#7a877f]">
         <button onClick={() => setActiveTab("stay")} className={`flex flex-col items-center gap-1 transition-all ${activeTab === "stay" ? "text-[#c57a32] font-bold" : "hover:text-[#16211c]"}`}>
           <BedDouble size={18} />
           <span>Stay</span>
@@ -569,7 +569,7 @@ export const GuestCompanion: React.FC = () => {
           <BellRing size={18} />
           <span>Services</span>
         </button>
-      </nav>
+      </nav>}
 
       <WifiCardModal isOpen={wifiModalOpen} onClose={() => setWifiModalOpen(false)} />
       <WhatToDoNowModal isOpen={whatToDoModalOpen} onClose={() => setWhatToDoModalOpen(false)} onOpenTripMode={() => setTripModeOpen(true)} />
@@ -586,6 +586,8 @@ export const GuestCompanion: React.FC = () => {
       <StaffRequestModal isOpen={staffModalOpen} onClose={() => setStaffModalOpen(false)} />
     </div>
   );
+
+  if (bare) return content;
 
   const frameStage = (frame: React.ReactNode) => (
     <div className="h-full min-h-0 overflow-hidden bg-[#e8eee8] flex items-center justify-center p-3 sm:p-4">

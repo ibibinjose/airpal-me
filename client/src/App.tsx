@@ -12,6 +12,9 @@ import { SuperAdminDashboard } from "./pages/SuperAdminDashboard";
 import { AuthPage } from "./pages/AuthPage";
 import Home from "./pages/Home";
 import { SharedTrip } from "./pages/SharedTrip";
+import { TravelOs } from "./pages/TravelOs";
+import { CampusCompanion } from "./pages/CampusCompanion";
+import { TravelOsProvider } from "./contexts/TravelOsContext";
 import { isNativeShell } from "./lib/platform";
 
 function parseQrType(value: string | null): QrType | null {
@@ -44,6 +47,26 @@ function GuestRoute({ params }: { params?: { propertyId?: string } }) {
   return <GuestCompanion />;
 }
 
+function CampusRoute() {
+  const { setQrType, setRoomNumber, setDeviceMode } = useAirPal();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const qr = parseQrType(searchParams.get("type"));
+    const room = searchParams.get("room");
+    const frame = searchParams.get("frame");
+    if (qr) setQrType(qr);
+    setRoomNumber(room || "R12");
+    if (isNativeShell()) {
+      setDeviceMode("responsive");
+    } else if (frame === "iphone" || frame === "android" || frame === "tablet" || frame === "responsive") {
+      setDeviceMode(frame);
+    }
+  }, [setQrType, setRoomNumber, setDeviceMode]);
+
+  return <CampusCompanion />;
+}
+
 function MainApp() {
   const [location, setLocation] = useLocation();
   const native = isNativeShell();
@@ -55,6 +78,10 @@ function MainApp() {
     ? "auth"
     : location.startsWith("/host")
     ? "dashboard"
+    : location.startsWith("/os")
+    ? "os"
+    : location.startsWith("/campus") || location.startsWith("/c/")
+    ? "campus"
     : location.startsWith("/stay") || location.startsWith("/g/")
     ? "companion"
     : native
@@ -62,10 +89,10 @@ function MainApp() {
     : "landing";
 
   useEffect(() => {
-    if (native && location === "/") setLocation("/stay");
+    if (native && location === "/") setLocation("/os");
   }, [native, location, setLocation]);
 
-  const lockViewport = activeView === "companion" || location.startsWith("/trip");
+  const lockViewport = activeView === "companion" || activeView === "os" || activeView === "campus" || location.startsWith("/trip");
 
   return (
     <div className={`flex flex-col bg-[#f9f8f4] text-[#16211c] font-sans antialiased ${lockViewport ? "h-dvh overflow-hidden" : "min-h-dvh"}`}>
@@ -73,7 +100,9 @@ function MainApp() {
         <DeviceFrameSwitcher
           activeView={activeView}
           onViewChange={(view) => {
-            if (view === "companion") setLocation("/stay");
+            if (view === "os") setLocation("/os");
+            else if (view === "companion") setLocation("/stay");
+            else if (view === "campus") setLocation("/campus");
             else if (view === "dashboard") setLocation("/host");
             else if (view === "admin") setLocation("/admin");
             else if (view === "auth") setLocation("/auth");
@@ -86,10 +115,13 @@ function MainApp() {
           <Route path="/admin" component={SuperAdminDashboard} />
           <Route path="/auth" component={AuthPage} />
           <Route path="/host" component={HostDashboard} />
+          <Route path="/os" component={TravelOs} />
           <Route path="/stay" component={GuestRoute} />
           <Route path="/g/:propertyId" component={GuestRoute} />
+          <Route path="/campus" component={CampusRoute} />
+          <Route path="/c/:campusId" component={CampusRoute} />
           <Route path="/trip/:tripId" component={SharedTrip} />
-          <Route path="/">{native ? <GuestRoute /> : <Home />}</Route>
+          <Route path="/">{native ? <TravelOs /> : <Home />}</Route>
         </Switch>
       </div>
     </div>
@@ -101,10 +133,12 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <AirPalProvider>
-          <TooltipProvider>
-            <Toaster richColors position="top-right" />
-            <MainApp />
-          </TooltipProvider>
+          <TravelOsProvider>
+            <TooltipProvider>
+              <Toaster richColors position="top-right" />
+              <MainApp />
+            </TooltipProvider>
+          </TravelOsProvider>
         </AirPalProvider>
       </AuthProvider>
     </ErrorBoundary>

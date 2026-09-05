@@ -14,12 +14,13 @@ import {
   Sparkles,
   ShieldCheck,
   User,
+  GraduationCap,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface Props {
-  activeView: "companion" | "dashboard" | "landing" | "admin" | "auth";
-  onViewChange: (view: "companion" | "dashboard" | "landing" | "admin" | "auth") => void;
+  activeView: "companion" | "dashboard" | "landing" | "admin" | "auth" | "os" | "campus";
+  onViewChange: (view: "companion" | "dashboard" | "landing" | "admin" | "auth" | "os" | "campus") => void;
 }
 
 export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange }) => {
@@ -59,6 +60,17 @@ export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange 
 
           <nav className="flex items-center rounded-lg bg-white p-0.5 border border-[#dde3db] text-[11px]">
             <button
+              onClick={() => onViewChange("os")}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all ${
+                activeView === "os"
+                  ? "bg-amber-400 text-stone-950 font-semibold shadow"
+                  : "text-[#5a6b62] hover:text-[#16211c]"
+              }`}
+            >
+              <Sparkles size={13} />
+              <span>Travel OS</span>
+            </button>
+            <button
               onClick={() => onViewChange("companion")}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all ${
                 activeView === "companion"
@@ -67,7 +79,18 @@ export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange 
               }`}
             >
               <Smartphone size={13} />
-              <span>Guest Companion</span>
+              <span>Hotel Stay</span>
+            </button>
+            <button
+              onClick={() => onViewChange("campus")}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all ${
+                activeView === "campus"
+                  ? "bg-amber-400 text-stone-950 font-semibold shadow"
+                  : "text-[#5a6b62] hover:text-[#16211c]"
+              }`}
+            >
+              <GraduationCap size={13} />
+              <span>Campus</span>
             </button>
             <button
               onClick={() => onViewChange("dashboard")}
@@ -118,7 +141,7 @@ export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange 
         </div>
 
         </div>
-        {activeView === "companion" && (
+        {(activeView === "companion" || activeView === "os" || activeView === "campus") && (
           <div className="flex items-center gap-2 text-[11px] overflow-x-auto no-scrollbar pb-0.5 whitespace-nowrap">
             {/* Device Viewport Selector */}
             <div className="flex items-center rounded-lg bg-white border border-[#dde3db] p-0.5">
@@ -177,12 +200,23 @@ export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange 
                 }}
                 className="bg-transparent text-[#3a4a42] outline-none cursor-pointer pr-1 text-[11px]"
               >
-                <option value="room:508" className="bg-white text-[#16211c]">QR: Room 508 (Harbour Suite)</option>
-                <option value="room:204" className="bg-white text-[#16211c]">QR: Room 204 (City Deluxe)</option>
-                <option value="property:lobby" className="bg-white text-[#16211c]">QR: Reception Lobby</option>
-                <option value="dining:grill" className="bg-white text-[#16211c]">QR: Waterfront Grill Menu</option>
-                <option value="experience:kayak" className="bg-white text-[#16211c]">QR: Sunset Kayak Tour</option>
-                <option value="emergency:safety" className="bg-white text-[#16211c]">QR: Emergency & Safety</option>
+                {activeView === "campus" ? (
+                  <>
+                    <option value="room:R12" className="bg-white text-[#16211c]">QR: Room R12 (Harbour College)</option>
+                    <option value="dining:hall" className="bg-white text-[#16211c]">QR: Great Hall dining</option>
+                    <option value="experience:fair" className="bg-white text-[#16211c]">QR: Clubs & societies fair</option>
+                    <option value="emergency:safety" className="bg-white text-[#16211c]">QR: Campus security</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="room:508" className="bg-white text-[#16211c]">QR: Room 508 (Harbour Suite)</option>
+                    <option value="room:204" className="bg-white text-[#16211c]">QR: Room 204 (City Deluxe)</option>
+                    <option value="property:lobby" className="bg-white text-[#16211c]">QR: Reception Lobby</option>
+                    <option value="dining:grill" className="bg-white text-[#16211c]">QR: Waterfront Grill Menu</option>
+                    <option value="experience:kayak" className="bg-white text-[#16211c]">QR: Sunset Kayak Tour</option>
+                    <option value="emergency:safety" className="bg-white text-[#16211c]">QR: Emergency & Safety</option>
+                  </>
+                )}
               </select>
             </div>
 

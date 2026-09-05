@@ -669,9 +669,9 @@ export const TRANSPORT_OPTIONS = [
 ];
 
 export const HOTEL_EVENTS = [
-  { id: "ev1", time: "7:30 PM", title: "Rooftop film club", detail: "Under the stars on Level 7 · 8 spots left", price: "Free for in-house guests" },
-  { id: "ev2", time: "5:00 PM", title: "Australian wine hour", detail: "The Rocks Cellar Bar · complimentary tasting flight", price: "Included" },
-  { id: "ev3", time: "Sat 10 AM", title: "The Rocks walking tour", detail: "Meet in lobby · 75 minutes of hidden sandstone lanes", price: "$18" },
+  { id: "ev1", time: "7:30 PM", date: "2026-09-15", title: "Rooftop film club", detail: "Under the stars on Level 7 · 8 spots left", price: "Free for in-house guests" },
+  { id: "ev2", time: "5:00 PM", date: "2026-09-15", title: "Australian wine hour", detail: "The Rocks Cellar Bar · complimentary tasting flight", price: "Included" },
+  { id: "ev3", time: "10:00 AM", date: "2026-09-16", title: "The Rocks walking tour", detail: "Meet in lobby · 75 minutes of hidden sandstone lanes", price: "$18" },
 ];
 
 export const SAFETY_AND_EMERGENCY_DATA = {
