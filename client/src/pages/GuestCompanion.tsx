@@ -36,6 +36,7 @@ import { SafetyModal } from "../components/companion/SafetyModal";
 import { StaffRequestModal } from "../components/companion/StaffRequestModal";
 import { toast } from "sonner";
 import { HOTEL_EVENTS, TRANSPORT_OPTIONS } from "../../../shared/airpal-data";
+import { DeviceStage } from "../components/os/DeviceStage";
 
 export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) => {
   const {
@@ -103,118 +104,84 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
 
   const content = (
     <div className={`relative h-full min-h-0 flex flex-col overflow-hidden bg-[#f9f8f4] text-[#16211c] ${seniorMode ? "text-base" : "text-sm"}`}>
-      <div className="shrink-0 bg-gradient-to-r from-[#fbe8d0] via-[#e7f3ec] to-[#fbe8d0] px-4 py-2 border-b border-[#dde3db] flex items-center justify-between gap-2 text-[11px]">
-        <div className="flex items-center gap-1.5 font-medium min-w-0">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-          <span className="text-[#5a6b62] truncate">{property.name}</span>
-          <span className="text-[#16211c] font-semibold shrink-0">· {scanLabel}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          {weather === "rainy" ? (
-            <span className="flex items-center gap-1 text-[#1d6aa5] font-mono">
-              <CloudRain size={12} /> Rain 18°C
+      <div className="guest-scroll flex-1 px-5 pt-5 pb-16 space-y-5">
+        <section>
+          <div className="flex items-center justify-between gap-2">
+            <p className="ap-kicker">{t("welcome")}, {guestName}</p>
+            <span className="flex items-center gap-1 text-[11px] text-[#7a877f]">
+              {weather === "rainy" ? <CloudRain size={12} className="text-[#1d6aa5]" /> : <Sun size={12} className="text-[#c57a32]" />}
+              {weather === "rainy" ? "18°" : "24°"} · {scanLabel}
             </span>
-          ) : (
-            <span className="flex items-center gap-1 text-[#c57a32] font-mono">
-              <Sun size={12} /> Sunny 24°C
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="guest-scroll flex-1 px-3 sm:px-4 pt-3 pb-4 space-y-4">
-        <section className="space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono tracking-wider uppercase text-[#c57a32]">
-              {t("welcome")}, {guestName}
-            </span>
-            <span className="text-[11px] text-[#7a877f] font-mono">{property.destination}</span>
           </div>
-          <h1 className={`font-bold tracking-tight text-[#16211c] ${seniorMode ? "text-3xl" : "text-2xl"}`}>
+          <h1 className={`ap-display leading-[1.05] mt-1 ${seniorMode ? "text-[34px]" : "text-[28px]"}`}>
             {property.name}
           </h1>
-          <p className="text-xs text-[#5a6b62]">{property.tagline}</p>
+          <p className="text-xs text-[#7a877f] mt-1">{property.tagline}</p>
         </section>
 
-        <section className="grid grid-cols-4 gap-1.5 sm:gap-2">
+        <section className="grid grid-cols-4 gap-2">
           {[
-            { label: "Wi-Fi", hint: "Connected", icon: Wifi, tone: "bg-[#f8e4c8] text-[#c57a32]", onClick: () => setWifiModalOpen(true) },
-            { label: "Order Food", hint: "Room Menu", icon: Utensils, tone: "bg-[#dceee4] text-[#2d7a55]", onClick: () => setDiningModalOpen(true) },
-            { label: "Staff Desk", hint: "24/7 Service", icon: BellRing, tone: "bg-[#ece4f6] text-[#6b46a5]", onClick: () => setStaffModalOpen(true) },
-            { label: "Emergency", hint: "000 / Duty", icon: ShieldAlert, tone: "bg-[#fadad6] text-[#b42318]", onClick: () => setSafetyModalOpen(true) },
+            { label: "Wi-Fi", icon: Wifi, tone: "bg-[#f8e4c8] text-[#c57a32]", onClick: () => setWifiModalOpen(true) },
+            { label: "Food", icon: Utensils, tone: "bg-[#dceee4] text-[#2d7a55]", onClick: () => setDiningModalOpen(true) },
+            { label: "Staff", icon: BellRing, tone: "bg-[#ece4f6] text-[#6b46a5]", onClick: () => setStaffModalOpen(true) },
+            { label: "Help", icon: ShieldAlert, tone: "bg-[#fadad6] text-[#b42318]", onClick: () => setSafetyModalOpen(true) },
           ].map((action) => {
             const Icon = action.icon;
             return (
               <button
                 key={action.label}
                 onClick={action.onClick}
-                className="flex flex-col items-center justify-center min-w-0 p-2 sm:p-2.5 rounded-2xl bg-white hover:bg-[#f3f6f1] border border-[#dde3db] shadow-[0_8px_18px_#5d765b0d] transition-all active:scale-95"
+                className="flex flex-col items-center justify-center min-w-0 py-3 rounded-2xl ap-card active:scale-95"
               >
-                <div className={`grid place-items-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl mb-1 ${action.tone}`}>
-                  <Icon size={16} />
+                <div className={`grid place-items-center w-10 h-10 rounded-2xl mb-1.5 ${action.tone}`}>
+                  <Icon size={17} />
                 </div>
-                <span className="text-[10px] sm:text-[11px] font-medium text-[#16211c] text-center leading-tight">{action.label}</span>
-                <span className="text-[8px] sm:text-[9px] text-[#7a877f] font-mono">{action.hint}</span>
+                <span className="text-[11px] font-medium">{action.label}</span>
               </button>
             );
           })}
         </section>
 
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#fde9c8] via-[#fff8ee] to-[#e5f3ea] border border-[#f0d4a8] p-4 shadow-[0_16px_32px_#c9a06a18]">
-          <div className="flex items-start justify-between gap-3 mb-2">
+        <section className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#fde9c8] via-[#fff8ee] to-[#e5f3ea] p-5">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/80 border border-[#f0d4a8] text-[#c57a32] text-[10px] font-mono tracking-wider uppercase font-semibold">
-                <Sparkles size={11} /> AirPal Signature
-              </span>
-              <h2 className={`font-bold text-[#16211c] mt-1 leading-tight ${seniorMode ? "text-xl" : "text-lg"}`}>
+              <p className="ap-kicker">Right now · {nowLabel}</p>
+              <h2 className={`ap-display leading-tight mt-1 ${seniorMode ? "text-2xl" : "text-[22px]"}`}>
                 {t("whatToDoNow")}
               </h2>
             </div>
-            <span className="text-[11px] font-mono text-[#7a877f] shrink-0">{nowLabel}</span>
           </div>
-          <p className="text-xs text-[#5a6b62] mb-3 leading-relaxed">
-            Time, weather, and a short walk from {property.name} — three options, ready now.
+          <p className="text-xs text-[#5a6b62] mt-2 mb-4 leading-relaxed">
+            Three walks from the door, matched to time and weather.
           </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                trackEvent("what_to_do_now_open");
-                setWhatToDoModalOpen(true);
-              }}
-              className="flex-1 min-w-0 flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl bg-[#18271f] hover:bg-[#284236] active:scale-98 text-[#fffdf8] font-bold text-xs transition-all shadow-md"
-            >
-              <span>See 3 options</span>
-              <ArrowRight size={14} />
-            </button>
-            <button
-              onClick={() => setTripModeOpen(true)}
-              className="flex items-center gap-1.5 py-2.5 px-3 rounded-2xl bg-white hover:bg-[#f3f6f1] active:scale-98 text-[#254137] text-xs font-semibold transition-all border border-[#dde3db] shrink-0"
-            >
-              <Compass size={14} />
-              <span>Trip Mode</span>
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              trackEvent("what_to_do_now_open");
+              setWhatToDoModalOpen(true);
+            }}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-[#18271f] text-[#fffdf8] font-semibold text-sm"
+          >
+            See options <ArrowRight size={15} />
+          </button>
         </section>
 
         <section
           onClick={() => setAskAirPalOpen(true)}
-          className="rounded-2xl bg-white hover:bg-[#f7faf6] border border-[#dde3db] p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all group shadow-[0_8px_18px_#5d765b0d]"
+          className="ap-card p-3.5 flex items-center justify-between gap-3 cursor-pointer group"
         >
           <div className="flex items-center gap-3">
-            <div className="grid place-items-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-[#24180d] font-bold shadow-md shadow-amber-400/20">
+            <div className="grid place-items-center w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 text-[#24180d]">
               <Sparkles size={18} />
             </div>
             <div>
-              <span className="block text-xs font-semibold text-[#16211c] group-hover:text-[#c57a32] transition-colors">
-                {t("askAirPal")} anything...
-              </span>
-              <span className="text-[11px] text-[#7a877f]">“Indian food nearby?” · “Late checkout?” · “Fix A/C”</span>
+              <span className="block text-sm font-semibold">{t("askAirPal")}</span>
+              <span className="text-[11px] text-[#7a877f]">Indian food · late checkout · A/C</span>
             </div>
           </div>
-          <ChevronRight size={16} className="text-[#7a877f] group-hover:translate-x-0.5 transition-transform" />
+          <ChevronRight size={16} className="text-[#7a877f]" />
         </section>
 
-        <div className="flex rounded-2xl bg-white border border-[#dde3db] p-1 text-[11px] shadow-[0_8px_18px_#5d765b0d]">
+        <div className="flex rounded-full bg-white border border-[#e3e9e1] p-1 text-[11px]">
           {[
             { id: "stay", label: "Stay", icon: BedDouble },
             { id: "discover", label: "Local", icon: MapPin },
@@ -546,28 +513,28 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
         )}
       </div>
 
-      {!bare && <nav className="shrink-0 z-30 border-t border-[#dde3db] bg-[#fffdf9]/95 backdrop-blur-xl py-2 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around text-[10px] text-[#7a877f]">
-        <button onClick={() => setActiveTab("stay")} className={`flex flex-col items-center gap-1 transition-all ${activeTab === "stay" ? "text-[#c57a32] font-bold" : "hover:text-[#16211c]"}`}>
-          <BedDouble size={18} />
-          <span>Stay</span>
+      {!bare && <nav className="ap-tabbar shrink-0 z-30 py-2 px-3 pb-[max(0.7rem,env(safe-area-inset-bottom))] flex items-center justify-around text-[10px] text-[#7a877f]">
+        <button onClick={() => setActiveTab("stay")} className={`flex flex-col items-center gap-1 min-w-[52px] ${activeTab === "stay" ? "text-[#18271f] font-semibold" : ""}`}>
+          <span className={`grid place-items-center w-10 h-8 rounded-full ${activeTab === "stay" ? "bg-amber-400/90 text-stone-950" : ""}`}><BedDouble size={17} /></span>
+          Stay
         </button>
-        <button onClick={() => setActiveTab("discover")} className={`flex flex-col items-center gap-1 transition-all ${activeTab === "discover" ? "text-[#c57a32] font-bold" : "hover:text-[#16211c]"}`}>
-          <MapPin size={18} />
-          <span>Discover</span>
+        <button onClick={() => setActiveTab("discover")} className={`flex flex-col items-center gap-1 min-w-[52px] ${activeTab === "discover" ? "text-[#18271f] font-semibold" : ""}`}>
+          <span className={`grid place-items-center w-10 h-8 rounded-full ${activeTab === "discover" ? "bg-amber-400/90 text-stone-950" : ""}`}><MapPin size={17} /></span>
+          Local
         </button>
-        <button onClick={() => setAskAirPalOpen(true)} className="flex flex-col items-center -mt-5 group">
-          <div className="grid place-items-center w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 text-[#24180d] font-bold shadow-lg shadow-amber-500/25 group-hover:scale-105 active:scale-95 transition-all">
-            <Sparkles size={22} />
-          </div>
-          <span className="text-[10px] font-bold text-[#c57a32] mt-1">Ask AirPal</span>
+        <button onClick={() => setAskAirPalOpen(true)} className="flex flex-col items-center gap-1 min-w-[52px] -mt-3">
+          <span className="grid place-items-center w-12 h-12 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-[#24180d] shadow-[0_10px_20px_#e8a84a44]">
+            <Sparkles size={20} />
+          </span>
+          <span className="font-semibold text-[#18271f]">Ask</span>
         </button>
-        <button onClick={() => setTripModeOpen(true)} className="flex flex-col items-center gap-1 hover:text-[#16211c] transition-all">
-          <Compass size={18} />
-          <span>Trip Mode</span>
+        <button onClick={() => setTripModeOpen(true)} className="flex flex-col items-center gap-1 min-w-[52px]">
+          <span className="grid place-items-center w-10 h-8 rounded-full"><Compass size={17} /></span>
+          Trip
         </button>
-        <button onClick={() => setActiveTab("services")} className={`flex flex-col items-center gap-1 transition-all ${activeTab === "services" ? "text-[#c57a32] font-bold" : "hover:text-[#16211c]"}`}>
-          <BellRing size={18} />
-          <span>Services</span>
+        <button onClick={() => setActiveTab("services")} className={`flex flex-col items-center gap-1 min-w-[52px] ${activeTab === "services" ? "text-[#18271f] font-semibold" : ""}`}>
+          <span className={`grid place-items-center w-10 h-8 rounded-full ${activeTab === "services" ? "bg-amber-400/90 text-stone-950" : ""}`}><BellRing size={17} /></span>
+          Hotel
         </button>
       </nav>}
 
@@ -588,47 +555,5 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
   );
 
   if (bare) return content;
-
-  const frameStage = (frame: React.ReactNode) => (
-    <div className="h-full min-h-0 overflow-hidden bg-[#e8eee8] flex items-center justify-center p-3 sm:p-4">
-      {frame}
-    </div>
-  );
-
-  if (deviceMode === "iphone") {
-    return frameStage(
-      <div className="relative w-[min(385px,100%)] h-full max-h-[810px] rounded-[52px] border-[10px] border-[#202d26] bg-[#f9f8f4] shadow-[20px_28px_70px_#5d765b2c] overflow-hidden flex flex-col">
-        <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-28 h-6 bg-[#111] rounded-full z-50 flex items-center justify-between px-2.5 pointer-events-none">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#222] border border-white/10" />
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-        </div>
-        <div className="flex-1 min-h-0 overflow-hidden pt-7">{content}</div>
-        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-[#16211c]/20 rounded-full z-50 pointer-events-none" />
-      </div>
-    );
-  }
-
-  if (deviceMode === "android") {
-    return frameStage(
-      <div className="relative w-[min(380px,100%)] h-full max-h-[810px] rounded-[40px] border-[8px] border-[#252f28] bg-[#f9f8f4] shadow-[20px_28px_70px_#5d765b2c] overflow-hidden flex flex-col">
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-[#111] rounded-full z-50 pointer-events-none" />
-        <div className="flex-1 min-h-0 overflow-hidden pt-6">{content}</div>
-        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-20 h-1 bg-[#16211c]/25 rounded-full z-50 pointer-events-none" />
-      </div>
-    );
-  }
-
-  if (deviceMode === "tablet") {
-    return frameStage(
-      <div className="relative w-[min(680px,100%)] h-full max-h-[850px] rounded-[36px] border-[14px] border-[#1e2621] bg-[#f9f8f4] shadow-[20px_28px_70px_#5d765b2c] overflow-hidden flex flex-col">
-        <div className="flex-1 min-h-0 overflow-hidden">{content}</div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="h-full min-h-0 bg-[#e8eee8] flex justify-center">
-      <div className="w-full max-w-[440px] h-full min-h-0 bg-[#f9f8f4] shadow-2xl">{content}</div>
-    </div>
-  );
+  return <DeviceStage mode={deviceMode}>{content}</DeviceStage>;
 };

@@ -22,6 +22,8 @@ import {
   Camera,
   Search,
   CalendarDays,
+  SlidersHorizontal,
+  ChevronDown,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAirPal } from "../contexts/AirPalContext";
@@ -47,6 +49,9 @@ import {
 } from "@shared/travel-os";
 import { answerFromKnowledge, buildArrivalBrief, computeHealth, whatToDoNow } from "../lib/travel-os-engine";
 import { CAMPUS_KNOWLEDGE } from "@shared/campus";
+import { collectWhatsOn, eventsOnDate } from "../lib/whats-on";
+
+const DEMO_TODAY = "2026-09-06";
 
 
 const KIND_ICON: Record<TripItemKind, React.ReactNode> = {
@@ -95,6 +100,8 @@ function TravelOsInner() {
   const [tagChip, setTagChip] = useState("all");
   const [mateName, setMateName] = useState("");
   const [mateRel, setMateRel] = useState<TripCompanion["relation"]>("family");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [healthOpen, setHealthOpen] = useState(false);
 
   const trip = os.activeTrip;
   const health = useMemo(
@@ -132,6 +139,19 @@ function TravelOsInner() {
     if (id) os.setActiveTripId(id);
   }, [os.setActiveTripId]);
 
+  const todayOn = useMemo(() => {
+    const seen = new Set<string>();
+    return eventsOnDate(collectWhatsOn(os.trips, os.items), DEMO_TODAY)
+      .filter((event) => {
+        const key = event.title.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 3);
+  }, [os.trips, os.items]);
+  const issues = health.checks.filter((check) => !check.ok);
+
   const visibleItems = os.activeItems.filter((item) => {
     if (tagChip !== "all" && !(item.tags || []).includes(tagChip) && !(trip?.tags || []).includes(tagChip)) return false;
     const q = query.trim().toLowerCase();
@@ -141,103 +161,100 @@ function TravelOsInner() {
 
   const content = (
     <div className="relative h-full min-h-0 flex flex-col overflow-hidden bg-[#f9f8f4] text-[#16211c]">
-      <header className="shrink-0 px-4 pt-3 pb-2 border-b border-[#dde3db] bg-[#fffdf9]">
-        <div className="flex items-center justify-between gap-2">
+      <header className="shrink-0 px-5 pt-4 pb-3 bg-[#fffdf9]">
+        <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <span className="text-[10px] font-mono tracking-widest uppercase text-[#c57a32]">Travel OS</span>
-            <h1 className="text-lg font-bold truncate">{trip?.title || "Your journey"}</h1>
+            <p className="ap-kicker">Your journey</p>
+            <h1 className="ap-display text-[26px] leading-[1.05] truncate">{trip?.city || "AirPal"}</h1>
+            <p className="text-xs text-[#7a877f] mt-0.5 truncate">{trip?.title}</p>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={() => setCalOpen(true)}
-              className="grid place-items-center w-9 h-9 rounded-xl bg-white border border-[#dde3db] text-[#16211c]"
-              aria-label="Open calendar"
-            >
+          <div className="flex items-center gap-1.5 shrink-0 pb-0.5">
+            <button onClick={() => setCalOpen(true)} className="ap-icon-btn" aria-label="Open calendar">
               <CalendarDays size={16} />
             </button>
-            <button
-              onClick={() => setScanOpen(true)}
-              className="grid place-items-center w-9 h-9 rounded-xl bg-[#18271f] text-[#fffdf8]"
-              aria-label="Scan QR code"
-            >
+            <button onClick={() => setScanOpen(true)} className="ap-icon-btn bg-[#18271f] text-[#fffdf8] border-[#18271f]" aria-label="Scan QR code">
               <Camera size={16} />
             </button>
-            <button
-              onClick={() => setNowOpen(true)}
-              className="px-3 py-2 rounded-xl bg-amber-400 text-stone-950 text-[11px] font-bold"
-            >
-              Do now
-            </button>
           </div>
         </div>
-        <label className="mt-2 flex items-center gap-2 rounded-xl border border-[#dde3db] bg-white px-2.5 py-1.5">
-          <Search size={14} className="text-[#7a877f]" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search trips, people, tags…"
-            className="w-full bg-transparent text-xs outline-none"
-          />
-        </label>
-        <div className="mt-2 flex gap-1 overflow-x-auto no-scrollbar">
-          {(["all", "past", "present", "future"] as const).map((chip) => (
-            <button
-              key={chip}
-              onClick={() => setWhenChip(chip)}
-              className={`px-2.5 py-1 rounded-full text-[10px] whitespace-nowrap border capitalize ${
-                whenChip === chip ? "bg-[#18271f] text-[#fffdf8] border-[#18271f]" : "bg-white border-[#dde3db] text-[#5a6b62]"
-              }`}
-            >
-              {chip === "all" ? "All times" : chip === "present" ? "Now" : chip === "future" ? "Next" : "Past"}
-            </button>
-          ))}
-        </div>
-        <div className="mt-1.5 flex gap-1 overflow-x-auto no-scrollbar">
-          {(["all", "family", "mates", "colleagues"] as const).map((chip) => (
-            <button
-              key={chip}
-              onClick={() => setPartyChip(chip)}
-              className={`px-2.5 py-1 rounded-full text-[10px] whitespace-nowrap border capitalize ${
-                partyChip === chip ? "bg-amber-400 border-amber-400 text-stone-950 font-semibold" : "bg-white border-[#dde3db] text-[#5a6b62]"
-              }`}
-            >
-              {chip === "all" ? "Everyone" : chip}
-            </button>
-          ))}
-        </div>
-        {allTags.length > 0 && (
-          <div className="mt-1.5 flex gap-1 overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => setTagChip("all")}
-              className={`px-2.5 py-1 rounded-full text-[10px] border ${tagChip === "all" ? "bg-[#e7f0ec] border-[#cfe6da] font-semibold" : "bg-white border-[#dde3db] text-[#5a6b62]"}`}
-            >
-              All tags
-            </button>
-            {allTags.map((tag) => (
+
+        <div className="mt-4 flex gap-2 overflow-x-auto no-scrollbar -mx-5 px-5">
+          {filteredTrips.map((item) => {
+            const active = item.id === trip?.id;
+            return (
               <button
-                key={tag}
-                onClick={() => setTagChip(tag)}
-                className={`px-2.5 py-1 rounded-full text-[10px] border ${tagChip === tag ? "bg-[#e7f0ec] border-[#cfe6da] font-semibold" : "bg-white border-[#dde3db] text-[#5a6b62]"}`}
+                key={item.id}
+                onClick={() => os.setActiveTripId(item.id)}
+                className={`min-w-[120px] rounded-2xl px-3.5 py-3 text-left transition-all ${
+                  active ? "bg-[#18271f] text-[#fffdf8] shadow-[0_10px_24px_#18271f33]" : "ap-card text-[#16211c]"
+                }`}
               >
-                #{tag}
+                <div className={`text-[10px] font-mono uppercase tracking-wider ${active ? "text-amber-300" : "text-[#c57a32]"}`}>
+                  {tripWhen(item)}
+                </div>
+                <div className="ap-display text-[17px] leading-tight mt-0.5">{item.city}</div>
+                <div className={`text-[10px] mt-1 capitalize ${active ? "text-white/70" : "text-[#7a877f]"}`}>{item.party}</div>
               </button>
-            ))}
+            );
+          })}
+          {filteredTrips.length === 0 && <span className="text-[11px] text-[#7a877f] py-3">No trips match those filters.</span>}
+        </div>
+
+        <div className="mt-3 flex items-center justify-between">
+          <button
+            onClick={() => setNowOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-amber-400 text-stone-950 text-[12px] font-semibold"
+          >
+            <Sparkles size={13} /> Do now
+          </button>
+          <button
+            onClick={() => setFiltersOpen((v) => !v)}
+            className="inline-flex items-center gap-1 text-[11px] text-[#7a877f]"
+          >
+            <SlidersHorizontal size={12} />
+            {filtersOpen ? "Hide" : "Filter"}
+          </button>
+        </div>
+
+        {filtersOpen && (
+          <div className="mt-3 space-y-2">
+            <label className="flex items-center gap-2 rounded-2xl border border-[#e3e9e1] bg-white px-3 py-2">
+              <Search size={14} className="text-[#7a877f]" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search trips, people, tags…"
+                className="w-full bg-transparent text-xs outline-none"
+              />
+            </label>
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+              {(["all", "past", "present", "future"] as const).map((chip) => (
+                <button
+                  key={chip}
+                  onClick={() => setWhenChip(chip)}
+                  className={`px-3 py-1 rounded-full text-[11px] whitespace-nowrap border capitalize ${
+                    whenChip === chip ? "bg-[#18271f] text-[#fffdf8] border-[#18271f]" : "bg-white border-[#e3e9e1] text-[#5a6b62]"
+                  }`}
+                >
+                  {chip === "all" ? "All" : chip === "present" ? "Now" : chip === "future" ? "Next" : "Past"}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+              {(["all", "family", "mates", "colleagues"] as const).map((chip) => (
+                <button
+                  key={chip}
+                  onClick={() => setPartyChip(chip)}
+                  className={`px-3 py-1 rounded-full text-[11px] whitespace-nowrap border capitalize ${
+                    partyChip === chip ? "bg-amber-400 border-amber-400 text-stone-950 font-semibold" : "bg-white border-[#e3e9e1] text-[#5a6b62]"
+                  }`}
+                >
+                  {chip === "all" ? "Everyone" : chip}
+                </button>
+              ))}
+            </div>
           </div>
         )}
-        <div className="mt-2 flex gap-1 overflow-x-auto no-scrollbar">
-          {filteredTrips.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => os.setActiveTripId(item.id)}
-              className={`px-2.5 py-1 rounded-full text-[10px] whitespace-nowrap border ${
-                item.id === trip?.id ? "bg-amber-400 border-amber-400 text-stone-950 font-semibold" : "bg-white border-[#dde3db] text-[#5a6b62]"
-              }`}
-            >
-              {item.city} · {tripWhen(item)} · {item.party}
-            </button>
-          ))}
-          {filteredTrips.length === 0 && <span className="text-[10px] text-[#7a877f]">No trips match those filters.</span>}
-        </div>
       </header>
 
       {os.mode === "stay" ? (
@@ -245,58 +262,105 @@ function TravelOsInner() {
           {trip?.propertyId === "harbour-college" ? <CampusCompanion bare /> : <GuestCompanion bare />}
         </div>
       ) : (
-      <div className="guest-scroll flex-1 px-4 py-3 space-y-3">
+      <div className="guest-scroll flex-1 px-5 py-4 space-y-4">
         {os.mode === "travel" && trip && (
           <>
-            <WhatsOnCalendar trips={os.trips} items={os.items} onSelectTrip={os.setActiveTripId} />
-            <section className="rounded-2xl bg-white border border-[#dde3db] p-3.5">
-              <div className="flex items-center justify-between">
+            <section className="ap-card p-4">
+              <div className="flex items-center justify-between mb-2">
                 <div>
-                  <span className="text-[10px] font-mono uppercase text-[#7a877f]">Trip health</span>
-                  <div className="text-2xl font-bold">{health.score}%</div>
+                  <p className="ap-kicker">What’s on</p>
+                  <h2 className="ap-display text-lg leading-tight">Sunday 6 Sep</h2>
                 </div>
-                <div className={`text-xs font-semibold ${health.score >= 80 ? "text-[#2d7a55]" : "text-[#c57a32]"}`}>
-                  {health.checks.filter((c) => !c.ok).length} to fix
-                </div>
+                <button onClick={() => setCalOpen(true)} className="text-[11px] font-semibold text-[#c57a32]">
+                  Calendar
+                </button>
               </div>
-              <div className="mt-2 space-y-1.5">
-                {health.checks.map((check) => (
-                  <div key={check.id} className="flex items-start gap-2 text-xs">
-                    {check.ok ? <Check size={14} className="text-[#2d7a55] mt-0.5" /> : <AlertTriangle size={14} className="text-[#c57a32] mt-0.5" />}
-                    <div>
-                      <div className="font-medium">{check.label}</div>
-                      <div className="text-[#5a6b62]">{check.detail}</div>
-                      {!check.ok && check.id === "transfer" && (
-                        <button onClick={os.confirmTransfer} className="mt-1 text-[#c57a32] font-semibold">
-                          Book Airport Link
-                        </button>
-                      )}
-                      {!check.ok && check.id === "conflict" && (
-                        <button onClick={os.resolveWalkConflict} className="mt-1 text-[#c57a32] font-semibold">
-                          Move harbour walk to 18:45
-                        </button>
-                      )}
-                    </div>
+              {todayOn.length === 0 ? (
+                <p className="text-xs text-[#7a877f]">A quiet day. Wander or rest.</p>
+              ) : (
+                <div className="space-y-2">
+                  {todayOn.map((event) => (
+                    <button
+                      key={event.id}
+                      onClick={() => event.tripId && os.setActiveTripId(event.tripId)}
+                      className="w-full text-left flex gap-3 items-start"
+                    >
+                      <span className="w-12 shrink-0 text-[10px] font-mono text-[#c57a32] pt-0.5">{event.time}</span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold truncate">{event.title}</span>
+                        <span className="block text-[11px] text-[#7a877f] truncate">{event.detail}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="ap-card p-4">
+              <button onClick={() => setHealthOpen((v) => !v)} className="w-full flex items-center justify-between gap-3">
+                <div className="text-left">
+                  <p className="ap-kicker">Trip health</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="ap-display text-[28px] leading-none">{health.score}%</span>
+                    <span className={`text-xs ${issues.length ? "text-[#c57a32]" : "text-[#2d7a55]"}`}>
+                      {issues.length ? `${issues.length} to fix` : "Ready"}
+                    </span>
                   </div>
-                ))}
-              </div>
+                </div>
+                <ChevronDown size={16} className={`text-[#7a877f] transition-transform ${healthOpen ? "rotate-180" : ""}`} />
+              </button>
+              {healthOpen && (
+                <div className="mt-3 space-y-2.5">
+                  {health.checks.map((check) => (
+                    <div key={check.id} className="flex items-start gap-2 text-xs">
+                      {check.ok ? <Check size={14} className="text-[#2d7a55] mt-0.5" /> : <AlertTriangle size={14} className="text-[#c57a32] mt-0.5" />}
+                      <div>
+                        <div className="font-medium">{check.label}</div>
+                        <div className="text-[#5a6b62]">{check.detail}</div>
+                        {!check.ok && check.id === "transfer" && (
+                          <button onClick={os.confirmTransfer} className="mt-1 text-[#c57a32] font-semibold">
+                            Book Airport Link
+                          </button>
+                        )}
+                        {!check.ok && check.id === "conflict" && (
+                          <button onClick={os.resolveWalkConflict} className="mt-1 text-[#c57a32] font-semibold">
+                            Move harbour walk to 18:45
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             {brief && trip.status !== "completed" && (
-              <section className="rounded-2xl bg-gradient-to-br from-[#fff4e4] to-[#eef6f0] border border-[#f0d4a8] p-3.5 space-y-1.5">
-                <span className="text-[10px] font-mono uppercase text-[#c57a32]">Arrival brief</span>
-                <h2 className="text-base font-bold">{brief.headline}</h2>
-                <p className="text-xs text-[#5a6b62]"><Sun size={12} className="inline mr-1" />{brief.weather}</p>
-                <p className="text-xs"><strong>Airport:</strong> {brief.airport}</p>
-                <p className="text-xs"><strong>Transport:</strong> {brief.transport}</p>
-                <p className="text-xs"><strong>Hotel:</strong> {brief.hotel}</p>
-                <p className="text-xs"><strong>First evening:</strong> {brief.evening}</p>
+              <section className="relative overflow-hidden rounded-[1.35rem] bg-gradient-to-br from-[#fde9c8] via-[#fff8ee] to-[#e7f3ec] border border-[#f0d4a8]/80 p-4">
+                <p className="ap-kicker">Arrival</p>
+                <h2 className="ap-display text-[22px] leading-tight mt-1">{brief.headline}</h2>
+                <p className="text-xs text-[#5a6b62] mt-1.5">
+                  {weather === "rainy" ? <CloudRain size={12} className="inline mr-1" /> : <Sun size={12} className="inline mr-1" />}
+                  {brief.weather}
+                </p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {[
+                    ["Airport", brief.airport],
+                    ["Get there", brief.transport],
+                    ["Stay", brief.hotel],
+                    ["Evening", brief.evening],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-2xl bg-white/70 px-3 py-2">
+                      <div className="text-[10px] font-mono uppercase text-[#c57a32]">{label}</div>
+                      <div className="text-[11px] text-[#3a4a42] leading-snug line-clamp-3">{value}</div>
+                    </div>
+                  ))}
+                </div>
               </section>
             )}
 
             {trip && (
-              <section className="rounded-2xl bg-white border border-[#dde3db] p-3 space-y-2">
-                <div className="text-[10px] font-mono uppercase text-[#c57a32]">Travelling with</div>
+              <section className="ap-card p-4 space-y-2.5">
+                <div className="ap-kicker">Travelling with</div>
                 <div className="flex flex-wrap gap-1.5">
                   <span className="px-2 py-1 rounded-full bg-[#18271f] text-white text-[10px]">You · {guestName}</span>
                   {(trip.companions || []).map((person) => (
@@ -338,12 +402,12 @@ function TravelOsInner() {
             {trip && <TripQrCard trip={trip} />}
 
             <section>
-              <h2 className="text-sm font-bold mb-2">My journey</h2>
-              <div className="relative border-l-2 border-amber-400/40 ml-3 space-y-2.5 pl-4">
+              <h2 className="ap-display text-xl mb-3">My journey</h2>
+              <div className="relative border-l-2 border-amber-400/35 ml-3 space-y-3 pl-5">
                 {visibleItems.map((item) => (
                   <div key={item.id} className="relative">
                     <div className={`absolute -left-[23px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white ${item.status === "missing" || item.status === "conflict" ? "bg-[#c57a32]" : item.status === "done" ? "bg-[#2d7a55]" : "bg-amber-400"}`} />
-                    <article className="rounded-2xl bg-white border border-[#dde3db] p-3">
+                    <article className="ap-card p-3.5">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-[#c57a32]">{KIND_ICON[item.kind]}</span>
@@ -368,22 +432,22 @@ function TravelOsInner() {
               </div>
             </section>
 
-            <section className="grid grid-cols-2 gap-2">
-              <button onClick={() => setDocsOpen(true)} className="rounded-2xl bg-white border border-[#dde3db] p-3 text-left text-xs font-semibold">
-                <Upload size={16} className="mb-1 text-[#c57a32]" />
-                Travel documents
+            <section className="grid grid-cols-2 gap-2.5">
+              <button onClick={() => setDocsOpen(true)} className="ap-card p-3.5 text-left">
+                <Upload size={16} className="mb-2 text-[#c57a32]" />
+                <div className="text-xs font-semibold">Documents</div>
               </button>
-              <button onClick={() => setAskOpen(true)} className="rounded-2xl bg-white border border-[#dde3db] p-3 text-left text-xs font-semibold">
-                <Sparkles size={16} className="mb-1 text-[#c57a32]" />
-                Ask from knowledge
+              <button onClick={() => setAskOpen(true)} className="ap-card p-3.5 text-left">
+                <Sparkles size={16} className="mb-2 text-[#c57a32]" />
+                <div className="text-xs font-semibold">Ask AirPal</div>
               </button>
-              <button onClick={() => setSafetyOpen(true)} className="rounded-2xl bg-white border border-[#dde3db] p-3 text-left text-xs font-semibold">
-                <ShieldAlert size={16} className="mb-1 text-[#b42318]" />
-                Emergency
+              <button onClick={() => setSafetyOpen(true)} className="ap-card p-3.5 text-left">
+                <ShieldAlert size={16} className="mb-2 text-[#b42318]" />
+                <div className="text-xs font-semibold">Emergency</div>
               </button>
-              <button onClick={() => setBuilderOpen(true)} className="rounded-2xl bg-white border border-[#dde3db] p-3 text-left text-xs font-semibold">
-                <Plus size={16} className="mb-1 text-[#c57a32]" />
-                New trip
+              <button onClick={() => setBuilderOpen(true)} className="ap-card p-3.5 text-left">
+                <Plus size={16} className="mb-2 text-[#c57a32]" />
+                <div className="text-xs font-semibold">New trip</div>
               </button>
             </section>
           </>
@@ -391,12 +455,12 @@ function TravelOsInner() {
 
         {os.mode === "explore" && (
           <>
-            <button onClick={() => setBuilderOpen(true)} className="w-full rounded-2xl bg-[#18271f] text-[#fffdf8] p-4 text-left">
-              <span className="text-[10px] font-mono uppercase text-amber-300">AI trip builder</span>
-              <div className="text-lg font-bold">Build from who you are, not a destination search.</div>
+            <button onClick={() => setBuilderOpen(true)} className="w-full rounded-[1.35rem] bg-[#18271f] text-[#fffdf8] p-5 text-left">
+              <span className="ap-kicker text-amber-300">AI trip builder</span>
+              <div className="ap-display text-[22px] leading-tight mt-1">Build from who you are, not a search.</div>
             </button>
             {EXPLORE_DESTINATIONS.map((d) => (
-              <article key={d.id} className="rounded-2xl bg-white border border-[#dde3db] p-3.5">
+              <article key={d.id} className="ap-card p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h3 className="font-semibold">{d.name}</h3>
@@ -419,9 +483,9 @@ function TravelOsInner() {
                 </div>
               </article>
             ))}
-            <h2 className="text-sm font-bold pt-1">Local voices</h2>
+            <h2 className="ap-display text-xl pt-1">Local voices</h2>
             {SEED_VOICES.map((v) => (
-              <article key={v.id} className="rounded-2xl bg-white border border-[#dde3db] p-3">
+              <article key={v.id} className="ap-card p-4">
                 <span className="text-[10px] font-mono uppercase text-[#c57a32]">{v.label}</span>
                 <h3 className="text-sm font-semibold">{v.place}</h3>
                 <p className="text-xs text-[#5a6b62]">{v.why}</p>
@@ -432,8 +496,8 @@ function TravelOsInner() {
 
         {os.mode === "memory" && (
           <>
-            <section className="rounded-2xl bg-white border border-[#dde3db] p-3.5">
-              <span className="text-[10px] font-mono uppercase text-[#c57a32]">AirPal passport</span>
+            <section className="ap-card p-4">
+              <span className="ap-kicker">AirPal passport</span>
               <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                 <div><strong>🇦🇺 Australia</strong><div className="text-xs text-[#5a6b62]">Sydney · Melbourne</div></div>
                 <div><strong>Places</strong><div className="text-xs text-[#5a6b62]">{os.wallet.length + os.memories.length} saved</div></div>
@@ -497,9 +561,9 @@ function TravelOsInner() {
                 Save
               </button>
             </div>
-            <h2 className="text-sm font-bold">Communities in {trip?.city || "Sydney"}</h2>
+            <h2 className="ap-display text-xl">Communities in {trip?.city || "Sydney"}</h2>
             {SEED_COMMUNITIES.map((c) => (
-              <article key={c.id} className="rounded-2xl bg-white border border-[#dde3db] p-3 space-y-1">
+              <article key={c.id} className="ap-card p-4 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold">{c.name}</h3>
                   <span className="text-[10px] text-[#7a877f]"><Users size={10} className="inline" /> {c.members}</span>
@@ -517,7 +581,7 @@ function TravelOsInner() {
       </div>
       )}
 
-      <nav className="shrink-0 border-t border-[#dde3db] bg-[#fffdf9] px-2 py-2 flex items-center justify-around text-[10px] text-[#7a877f]">
+      <nav className="ap-tabbar shrink-0 px-3 py-2 pb-[max(0.7rem,env(safe-area-inset-bottom))] flex items-center justify-around text-[10px] text-[#7a877f]">
         {([
           ["explore", "Explore", Compass],
           ["travel", "Travel", MapPin],
@@ -527,9 +591,13 @@ function TravelOsInner() {
           <button
             key={id}
             onClick={() => os.setMode(id)}
-            className={`flex flex-col items-center gap-0.5 ${os.mode === id ? "text-[#c57a32] font-bold" : ""}`}
+            className={`flex flex-col items-center gap-1 min-w-[56px] py-1 rounded-2xl ${
+              os.mode === id ? "text-[#18271f] font-semibold" : ""
+            }`}
           >
-            <Icon size={18} />
+            <span className={`grid place-items-center w-10 h-8 rounded-full ${os.mode === id ? "bg-amber-400/90 text-stone-950" : ""}`}>
+              <Icon size={17} />
+            </span>
             {label}
           </button>
         ))}

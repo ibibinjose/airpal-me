@@ -49,6 +49,46 @@
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
 }
+.ap-stage {
+  background:
+    radial-gradient(920px 460px at 50% -12%, #f7ead6 0%, transparent 58%),
+    radial-gradient(720px 380px at 92% 118%, #d5e5db 0%, transparent 52%),
+    #eaeee8;
+}
+.ap-kicker {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c57a32;
+  font-weight: 500;
+}
+.ap-display {
+  font-family: 'Fraunces', serif;
+  letter-spacing: -0.045em;
+  font-weight: 600;
+}
+.ap-card {
+  background: #fffdf9;
+  border: 1px solid #e3e9e1;
+  border-radius: 1.35rem;
+  box-shadow: 0 12px 30px #5d765b0a;
+}
+.ap-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid #e3e9e1;
+  background: #fffdf9;
+  color: #16211c;
+}
+.ap-tabbar {
+  background: rgba(255, 253, 249, 0.92);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid #e3e9e1;
+}
 #root { min-height: 100vh; background: #f9f8f4; }
 .has-app-chrome .nav-wrap { position: relative; padding-top: 12px; }
 .has-app-chrome .hero-section { padding-top: 48px; }

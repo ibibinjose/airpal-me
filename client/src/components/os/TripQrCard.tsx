@@ -17,7 +17,7 @@ export function TripQrCard({ trip }: { trip: Trip }) {
   }, [payload]);
 
   return (
-    <section className="rounded-2xl bg-white border border-[#dde3db] p-3.5 flex items-center gap-3">
+    <section className="ap-card p-4 flex items-center gap-3">
       {src ? (
         <img src={src} alt={label} className="w-24 h-24 rounded-xl border border-[#dde3db] bg-white" />
       ) : (

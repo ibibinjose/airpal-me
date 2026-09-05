@@ -61,11 +61,11 @@ export function WhatsOnCalendar({ trips, items, onSelectTrip }: Props) {
   });
 
   return (
-    <section className="rounded-2xl bg-white border border-[#dde3db] p-3 space-y-3">
+    <section className="ap-card p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-[10px] font-mono uppercase text-[#c57a32]">Calendar</span>
-          <h2 className="text-sm font-bold leading-tight">{monthLabel}</h2>
+          <span className="ap-kicker">Calendar</span>
+          <h2 className="ap-display text-lg leading-tight">{monthLabel}</h2>
         </div>
         <div className="flex items-center gap-1">
           <button
