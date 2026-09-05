@@ -952,9 +952,9 @@ export const HostDashboard: React.FC = () => {
                 </span>
 
                 <div className="w-64 p-6 rounded-2xl bg-[#fdfbf7] text-stone-950 shadow-2xl border border-stone-200 flex flex-col items-center space-y-3">
-                  <div className="flex items-center gap-1 font-bold text-xs">
-                    <span className="text-amber-600">✦</span>
-                    <span>airpal<span className="text-amber-600">.me</span></span>
+                  <div className="flex items-center gap-1.5 font-bold text-xs">
+                    <img src="/logo-mark.png" alt="" className="w-5 h-5 object-contain rounded-md" />
+                    <span>AirPal<span className="text-[#0050d8]">.me</span></span>
                   </div>
 
                   <div className="w-36 h-36 border-4 border-stone-950 rounded-2xl p-2.5 flex items-center justify-center bg-white shadow-inner">

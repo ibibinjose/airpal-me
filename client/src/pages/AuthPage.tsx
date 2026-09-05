@@ -54,6 +54,7 @@ export const AuthPage: React.FC = () => {
       <div className="w-full max-w-xl space-y-6">
         {/* Header Branding */}
         <div className="text-center space-y-2">
+          <img src="/logo.jpg" alt="AirPal.me" className="mx-auto h-28 w-28 object-contain" />
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300/40 text-xs font-semibold">
             <Sparkles size={13} className="text-amber-600" />
             <span>AirPal Identity & Business Suite</span>

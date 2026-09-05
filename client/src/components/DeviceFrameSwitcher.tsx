@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { AirPalLogo } from "./BrandLogo";
 
 interface Props {
   activeView: "companion" | "dashboard" | "landing" | "admin" | "auth" | "os" | "campus";
@@ -60,14 +61,10 @@ export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange 
           <button
             type="button"
             onClick={() => onViewChange("landing")}
-            className="flex items-center gap-1.5 font-bold tracking-tight text-sm"
+            className="flex items-center font-bold tracking-tight text-sm"
+            aria-label="AirPal.me home"
           >
-            <span className="grid place-items-center w-7 h-7 rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 text-stone-900 text-xs shadow-[0_6px_14px_#efb27455]">
-              ✦
-            </span>
-            <span className="hidden sm:inline">
-              airpal<span className="text-amber-500">.me</span>
-            </span>
+            <AirPalLogo size={28} compact className="text-sm" />
           </button>
 
           <nav className="flex items-center rounded-full bg-white/80 p-0.5 border border-[#e3e9e1] text-[11px]">

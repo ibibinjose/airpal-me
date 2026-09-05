@@ -74,7 +74,7 @@ function GuestPreview() {
       <div className="phone-notch" />
       <div className="phone-screen">
         <div className="phone-topbar">
-          <span className="mini-logo"><span className="logo-spark">✦</span> airpal</span>
+          <span className="mini-logo"><img src="/logo-mark.png" alt="" className="mini-mark" /> AirPal</span>
           <div className="topbar-actions"><Languages size={14} /><span>EN</span><Bell size={15} /></div>
         </div>
         <div className="phone-content">
@@ -128,7 +128,7 @@ export default function Home() {
   return (
     <main className="site-shell has-app-chrome">
       <nav className="nav-wrap">
-        <button className="brand" onClick={() => scrollTo("top")}><span className="brand-mark">✦</span><span>airpal<span className="brand-dot">.</span>me</span></button>
+        <button className="brand" onClick={() => scrollTo("top")}><span className="brand-mark"><img src="/logo-mark.png" alt="" /></span><span>AirPal<span className="brand-dot">.</span>me</span></button>
         <div className={`nav-links ${mobileOpen ? "open" : ""}`}>
           <button onClick={() => scrollTo("platform-suite")}>Platform <ChevronDown size={14} /></button>
           <button onClick={() => scrollTo("why-airpal")}>Why AirPal</button>
@@ -143,6 +143,7 @@ export default function Home() {
         <div className="hero-glow glow-one" /><div className="hero-glow glow-two" />
         <div className="hero-grid">
           <div className="hero-copy">
+            <img src="/logo.jpg" alt="AirPal.me — Travel smarter together" className="hero-lockup" />
             <div className="eyebrow-pill"><span className="pulse-dot" /> THE DIGITAL GUEST EXPERIENCE, REIMAGINED</div>
             <h1>Make every stay<br /><em>feel like a local secret.</em></h1>
             <p className="hero-lede">AirPal gives your guests one beautifully simple place to ask, explore, book, and belong — before, during, and after their stay.</p>
@@ -165,7 +166,7 @@ export default function Home() {
 
       <section className="final-cta section-pad"><div className="final-inner"><span className="eyebrow">READY WHEN YOU ARE</span><h2>Give your guests<br /><em>something to talk about.</em></h2><p>Set up your digital guest experience in an afternoon. No app download. No training manual. Just a better stay.</p><button className="button-primary light" onClick={() => setLocation("/stay")}>Start with AirPal <ArrowRight size={17} /></button><div className="final-note"><Check size={14} /> Free to explore · No credit card required</div></div><div className="final-orb orb-one" /><div className="final-orb orb-two" /></section>
 
-      <footer className="footer"><div className="footer-brand"><button className="brand inverse" onClick={() => scrollTo("top")}><span className="brand-mark">✦</span><span>airpal<span className="brand-dot">.</span>me</span></button><p>Make every stay feel like a local secret.</p></div><div className="footer-links"><div><b>Product</b><button onClick={() => scrollTo("platform")}>Platform</button><button onClick={() => scrollTo("calculator")}>ROI calculator</button><button onClick={() => notifyComingSoon("Integrations are coming soon")}>Integrations</button></div><div><b>Company</b><button onClick={() => notifyComingSoon("About AirPal")}>About</button><button onClick={() => notifyComingSoon("Journal")}>Journal</button><button onClick={() => notifyComingSoon("Contact")}>Contact</button></div><div><b>Follow along</b><button onClick={() => notifyComingSoon("Instagram")}>Instagram</button><button onClick={() => notifyComingSoon("LinkedIn")}>LinkedIn</button><button onClick={() => notifyComingSoon("Privacy")}>Privacy</button></div></div><div className="footer-bottom"><span>© 2026 AirPal.me</span><span>Built for curious guests &amp; thoughtful hosts.</span></div></footer>
+      <footer className="footer"><div className="footer-brand"><button className="brand inverse" onClick={() => scrollTo("top")}><span className="brand-mark"><img src="/logo-mark.png" alt="" /></span><span>AirPal<span className="brand-dot">.</span>me</span></button><p>Travel smarter together.</p></div><div className="footer-links"><div><b>Product</b><button onClick={() => scrollTo("platform")}>Platform</button><button onClick={() => scrollTo("calculator")}>ROI calculator</button><button onClick={() => notifyComingSoon("Integrations are coming soon")}>Integrations</button></div><div><b>Company</b><button onClick={() => notifyComingSoon("About AirPal")}>About</button><button onClick={() => notifyComingSoon("Journal")}>Journal</button><button onClick={() => notifyComingSoon("Contact")}>Contact</button></div><div><b>Follow along</b><button onClick={() => notifyComingSoon("Instagram")}>Instagram</button><button onClick={() => notifyComingSoon("LinkedIn")}>LinkedIn</button><button onClick={() => notifyComingSoon("Privacy")}>Privacy</button></div></div><div className="footer-bottom"><span>© 2026 AirPal.me</span><span>Built for curious guests &amp; thoughtful hosts.</span></div></footer>
 
       {showDemo && <div className="demo-overlay" onClick={() => setShowDemo(false)}><div className="demo-modal" onClick={(e) => e.stopPropagation()}><button className="modal-close" onClick={() => setShowDemo(false)} aria-label="Close"><X size={18} /></button><div className="modal-copy"><span className="eyebrow">GUEST MODE</span><h2>One scan.<br /><em>Welcome in.</em></h2><p>This is the guest side of AirPal — the view your guests open from a QR code in their room, lobby, or welcome email.</p><div className="modal-perks"><span><QrCode size={15} /> No app</span><span><Languages size={15} /> 100+ languages</span><span><Headphones size={15} /> Always on</span></div></div><GuestPreview /></div></div>}
     </main>

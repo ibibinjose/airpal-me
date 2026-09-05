@@ -2,10 +2,10 @@
   "name": "AirPal.me — The Intelligent Guest & Destination Companion",
   "short_name": "AirPal",
   "description": "Your intelligent digital guest companion. One scan connects hotel services, local discovery, experiences, and personalized itineraries.",
-  "start_url": "/stay",
+  "start_url": "/os",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f9f8f4",
+  "background_color": "#ffffff",
   "theme_color": "#f9f8f4",
   "orientation": "portrait",
   "icons": [
@@ -13,13 +13,19 @@
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
