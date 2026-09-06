@@ -22,18 +22,35 @@ export interface PropertyInfo {
     type: string;
     price: string;
   };
-  facilities: {
-    name: string;
-    hours: string;
-    floor: string;
-    details: string;
-    icon: string;
-  }[];
+  facilities: FacilityItem[];
+  roomTypes?: RoomType[];
   roomsCount?: number;
   status?: "active" | "trial" | "suspended";
   ownerEmail?: string;
   monthlyRevenue?: number;
   plan?: "Starter" | "Professional" | "Enterprise";
+}
+
+export interface FacilityItem {
+  id?: string;
+  name: string;
+  hours: string;
+  floor: string;
+  details: string;
+  icon: string;
+}
+
+export interface RoomType {
+  id: string;
+  name: string;
+  category: "Standard" | "Deluxe" | "Suite" | "Penthouse" | "Villa";
+  capacity: number;
+  sizeSqm?: number;
+  bedConfig: string;
+  totalRooms: number;
+  startingPrice?: number;
+  features: string[];
+  roomNumbers?: string[];
 }
 
 export type UserRole = "super_admin" | "host_admin" | "staff" | "guest";
@@ -171,6 +188,44 @@ export const CURRENT_PROPERTY: PropertyInfo = {
     { name: "The Rocks Cellar Bar", hours: "4:00 PM – 11:30 PM", floor: "Ground Floor", details: "Australian natural wines & craft cocktails", icon: "Wine" },
     { name: "Luggage Storage", hours: "24/7 Front Desk", floor: "Lobby", details: "Complimentary secure luggage holding pre-checkin & post-checkout", icon: "Luggage" },
     { name: "Guest Laundry & Steamer", hours: "7:00 AM – 9:00 PM", floor: "Level 3", details: "Self-service Miele washers & dryers, dry cleaning available", icon: "Shirt" },
+  ],
+  roomTypes: [
+    {
+      id: "deluxe-king",
+      name: "Deluxe King Harbour View",
+      category: "Deluxe",
+      capacity: 2,
+      sizeSqm: 38,
+      bedConfig: "1 King Bed",
+      totalRooms: 42,
+      startingPrice: 320,
+      features: ["Harbour & Bridge View", "Rain Shower", "Espresso Machine", "Smart TV"],
+      roomNumbers: ["101", "102", "103", "104", "105", "106", "107", "108", "201", "202", "203", "204", "205", "206", "207", "208"],
+    },
+    {
+      id: "executive-suite",
+      name: "Executive Sanctuary Suite",
+      category: "Suite",
+      capacity: 3,
+      sizeSqm: 56,
+      bedConfig: "1 King Bed + Lounge",
+      totalRooms: 28,
+      startingPrice: 480,
+      features: ["Deep Soaking Tub", "Complimentary Mini-Bar", "Balcony", "Lounge Area"],
+      roomNumbers: ["301", "302", "303", "304", "305", "401", "402", "403", "404", "405"],
+    },
+    {
+      id: "penthouse-sky",
+      name: "The Rocks Panoramic Penthouse",
+      category: "Penthouse",
+      capacity: 4,
+      sizeSqm: 95,
+      bedConfig: "2 King Bedrooms",
+      totalRooms: 14,
+      startingPrice: 850,
+      features: ["Private Rooftop Terrace", "Full Kitchen", "Butler Service", "Unrestricted Skyline Views"],
+      roomNumbers: ["501", "502", "503", "504", "505", "506", "507", "508"],
+    },
   ],
 };
 

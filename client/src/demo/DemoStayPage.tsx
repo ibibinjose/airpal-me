@@ -17,6 +17,10 @@ import {
   Clock,
   MapPin,
   ExternalLink,
+  DoorOpen,
+  ChevronDown,
+  BedDouble,
+  X,
 } from "lucide-react";
 import {
   getSandboxProperties,
@@ -38,11 +42,14 @@ export const DemoStayPage: React.FC = () => {
   const menu = getSandboxMenu(currentProperty.id);
 
   const [activeTab, setActiveTab] = useState<"hub" | "dining" | "deals" | "concierge">("hub");
+  const [roomNumber, setRoomNumber] = useState<string>("508");
+  const [showRoomModal, setShowRoomModal] = useState<boolean>(false);
+  const [customRoomInput, setCustomRoomInput] = useState<string>("");
   const [wifiCopied, setWifiCopied] = useState(false);
   const [cart, setCart] = useState<{ [id: string]: number }>({});
   const [chatMessage, setChatMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<Array<{ sender: "guest" | "concierge"; text: string }>>([
-    { sender: "concierge", text: `Welcome to ${currentProperty.name}! I am your in-house digital concierge. How may I assist your stay in Room 508 today?` },
+    { sender: "concierge", text: `Welcome to ${currentProperty.name}! I am your in-house digital concierge. How may I assist your stay in Room ${roomNumber} today?` },
   ]);
 
   const copyWifi = () => {
@@ -55,30 +62,30 @@ export const DemoStayPage: React.FC = () => {
   const handleOrderDining = (item: (typeof menu)[0]) => {
     addSandboxTicket({
       propertyId: currentProperty.id,
-      roomNumber: "508",
+      roomNumber: roomNumber,
       guestName: "Sophia Rossi",
       category: "dining",
-      details: `1x ${item.name} ($${item.price}) delivered to Room 508.`,
+      details: `1x ${item.name} ($${item.price}) delivered to Room ${roomNumber}.`,
       status: "pending",
       urgency: "normal",
     });
     toast.success(`Ordered ${item.name}!`, {
-      description: "Dispatched to the front desk & kitchen queue in the Host CMS.",
+      description: `Dispatched to front desk & kitchen queue for Room ${roomNumber}.`,
     });
   };
 
   const handleBookDeal = (deal: (typeof deals)[0]) => {
     addSandboxTicket({
       propertyId: currentProperty.id,
-      roomNumber: "508",
+      roomNumber: roomNumber,
       guestName: "Sophia Rossi",
       category: "reception",
-      details: `Guest in Room 508 claimed promo "${deal.title}" for $${deal.price}.`,
+      details: `Guest in Room ${roomNumber} claimed promo "${deal.title}" for $${deal.price}.`,
       status: "in_progress",
       urgency: "urgent",
     });
     toast.success(`Booked ${deal.title}!`, {
-      description: "Added to your room folio. Host notified in staff queue.",
+      description: `Added to Room ${roomNumber} folio. Staff notified.`,
     });
   };
 
@@ -93,10 +100,10 @@ export const DemoStayPage: React.FC = () => {
     setTimeout(() => {
       let reply = "Certainly! I have logged your request with our front desk team. Someone will assist you shortly.";
       if (query.toLowerCase().includes("towel") || query.toLowerCase().includes("pillow")) {
-        reply = "I've dispatched housekeeping Floor 5 with extra plush towels and pillows for Room 508 right away!";
+        reply = `I've dispatched housekeeping Floor 5 with extra plush towels and pillows for Room ${roomNumber} right away!`;
         addSandboxTicket({
           propertyId: currentProperty.id,
-          roomNumber: "508",
+          roomNumber: roomNumber,
           guestName: "Sophia Rossi",
           category: "housekeeping",
           details: query,
@@ -104,13 +111,27 @@ export const DemoStayPage: React.FC = () => {
           urgency: "normal",
         });
       } else if (query.toLowerCase().includes("checkout") || query.toLowerCase().includes("late")) {
-        reply = "Standard checkout is 11:00 AM. I have reserved our late 2:00 PM checkout pass for Room 508!";
+        reply = `Standard checkout is 11:00 AM. I have reserved our late 2:00 PM checkout pass for Room ${roomNumber}!`;
       } else if (query.toLowerCase().includes("wifi") || query.toLowerCase().includes("password")) {
         reply = `Our Wi-Fi is '${currentProperty.wifi?.network}' with password '${currentProperty.wifi?.password}'.`;
       }
 
       setChatHistory((prev) => [...prev, { sender: "concierge", text: reply }]);
     }, 600);
+  };
+
+  const handleSwitchRoom = (newRoom: string) => {
+    if (!newRoom.trim()) return;
+    const r = newRoom.trim();
+    setRoomNumber(r);
+    setShowRoomModal(false);
+    setChatHistory((prev) => [
+      ...prev,
+      { sender: "concierge", text: `Active key updated! Now assisting your stay in Room ${r}.` },
+    ]);
+    toast.success(`Switched to Room ${r}`, {
+      description: `Guest orders and requests are now bound to Room ${r}.`,
+    });
   };
 
   return (
@@ -130,9 +151,16 @@ export const DemoStayPage: React.FC = () => {
                 <Sparkles size={11} />
                 <span>Zero-App Guest Companion</span>
               </div>
-              <span className="font-mono text-xs text-amber-300 font-bold bg-white/10 px-2 py-0.5 rounded-md">
-                Room 508
-              </span>
+              <button
+                type="button"
+                onClick={() => setShowRoomModal(true)}
+                className="font-mono text-xs text-amber-950 font-bold bg-amber-400 hover:bg-amber-300 px-2.5 py-1 rounded-full flex items-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer"
+                title="Click to switch room number"
+              >
+                <DoorOpen size={12} />
+                <span>Room {roomNumber}</span>
+                <ChevronDown size={11} className="opacity-80" />
+              </button>
             </div>
 
             <div>
@@ -140,6 +168,22 @@ export const DemoStayPage: React.FC = () => {
                 {currentProperty.name}
               </h1>
               <p className="text-[11px] text-stone-300">{currentProperty.destination}</p>
+            </div>
+
+            {/* Room Key & Folio Status Pill */}
+            <div className="flex items-center justify-between p-2 rounded-xl bg-white/10 border border-white/15 text-[11px]">
+              <div className="flex items-center gap-1.5 font-mono">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-stone-300">Active Key:</span>
+                <strong className="text-amber-300 font-bold">Room {roomNumber}</strong>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRoomModal(true)}
+                className="text-[10px] text-amber-300 hover:text-white underline font-semibold"
+              >
+                Switch Room
+              </button>
             </div>
 
             {/* Quick 1-Tap Wi-Fi Card */}
@@ -389,6 +433,92 @@ export const DemoStayPage: React.FC = () => {
           </div>
 
         </div>
+
+        {/* Room Switcher Modal in Demo */}
+        {showRoomModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-[#fffdf9] border border-stone-300 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl relative">
+              <button
+                type="button"
+                onClick={() => setShowRoomModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 grid place-items-center text-stone-600"
+              >
+                <X size={16} />
+              </button>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-400 text-stone-950 font-bold grid place-items-center">
+                  <DoorOpen size={20} />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-amber-700 font-bold">
+                    Sandbox Room Key
+                  </span>
+                  <h3 className="text-lg font-bold text-stone-900">Switch Room</h3>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between text-xs font-mono">
+                <div>
+                  <span className="text-stone-500 text-[10px] block">Current Room:</span>
+                  <strong className="text-stone-950 text-base font-extrabold">Room {roomNumber}</strong>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                  Active Key
+                </span>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-stone-700 block mb-2">
+                  Select Room:
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {["101", "102", "204", "305", "402", "508"].map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => handleSwitchRoom(r)}
+                      className={`py-2 px-3 rounded-xl font-mono text-xs font-bold transition-all ${
+                        r === roomNumber
+                          ? "bg-amber-400 text-stone-950 ring-2 ring-amber-500 shadow-xs"
+                          : "bg-white hover:bg-amber-50 text-stone-800 border border-stone-200"
+                      }`}
+                    >
+                      Room {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-stone-100">
+                <label className="text-[11px] font-semibold text-stone-600 block mb-1">
+                  Or enter custom room:
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. 702 or Penthouse"
+                    value={customRoomInput}
+                    onChange={(e) => setCustomRoomInput(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-xl bg-white border border-stone-300 text-xs font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (customRoomInput.trim()) {
+                        handleSwitchRoom(customRoomInput.trim());
+                        setCustomRoomInput("");
+                      }
+                    }}
+                    className="px-4 py-2 rounded-xl bg-stone-900 text-white font-bold text-xs hover:bg-stone-800"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
