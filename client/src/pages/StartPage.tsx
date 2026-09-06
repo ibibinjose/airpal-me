@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { makeQrDataUrl, stayQrPayload, campusQrPayload } from "../lib/qr";
 import { leaveDemo } from "../lib/app-mode";
 import { DEMO_USERS } from "@shared/airpal-data";
+import { DemoEntryPanel } from "../components/DemoEntryPanel";
 
 type Kind = "hotel" | "campus" | "guest";
 
@@ -166,28 +167,35 @@ export default function StartPage() {
         )}
 
         {step === 3 && (
-          <div className="ap-card p-6 space-y-4 text-center">
-            <p className="ap-kicker">Ready to print</p>
-            <h2 className="ap-display text-2xl">{placeName} is live</h2>
-            <p className="text-sm text-[#5a6b62]">Put this QR on the desk or gate. Guests scan it. They do not create an account.</p>
-            {qr && <img src={qr} alt="Guest QR" className="mx-auto w-48 h-48 rounded-2xl border border-[#e3e9e1]" />}
-            <p className="text-[10px] font-mono text-[#7a877f] break-all">{guestUrl}</p>
-            <button
-              onClick={() => {
-                void navigator.clipboard.writeText(guestUrl);
-                toast.success("Guest link copied");
-              }}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[#c57a32]"
-            >
-              <Copy size={12} /> Copy guest link
-            </button>
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <button onClick={() => window.open(guestUrl, "_blank")} className="py-3 rounded-full bg-[#18271f] text-white text-xs font-semibold">
-                Open as guest
+          <div className="space-y-4">
+            <div className="ap-card p-6 space-y-4 text-center">
+              <p className="ap-kicker">Ready to print</p>
+              <h2 className="ap-display text-2xl">{placeName} is live</h2>
+              <p className="text-sm text-[#5a6b62]">Put this QR on the desk or gate. Guests scan it. They do not create an account.</p>
+              {qr && <img src={qr} alt="Guest QR" className="mx-auto w-48 h-48 rounded-2xl border border-[#e3e9e1]" />}
+              <p className="text-[10px] font-mono text-[#7a877f] break-all">{guestUrl}</p>
+              <button
+                onClick={() => {
+                  void navigator.clipboard.writeText(guestUrl);
+                  toast.success("Guest link copied");
+                }}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[#c57a32]"
+              >
+                <Copy size={12} /> Copy guest link
               </button>
-              <button onClick={() => setLocation("/host")} className="py-3 rounded-full border border-[#e3e9e1] bg-white text-xs font-semibold">
-                Host dashboard
-              </button>
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <button onClick={() => window.open(guestUrl, "_blank")} className="py-3 rounded-full bg-[#18271f] text-white text-xs font-semibold">
+                  Open as guest
+                </button>
+                <button onClick={() => setLocation("/host")} className="py-3 rounded-full border border-[#e3e9e1] bg-white text-xs font-semibold">
+                  Host dashboard
+                </button>
+              </div>
+            </div>
+
+            <div className="ap-card p-5 text-left">
+              <p className="ap-kicker mb-2">Demo</p>
+              <DemoEntryPanel compact />
             </div>
           </div>
         )}

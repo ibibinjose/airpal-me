@@ -18,7 +18,7 @@ import { WalkingTourPage } from "./pages/WalkingTour";
 import { GuideProfilePage } from "./pages/GuideProfile";
 import { TravelOsProvider } from "./contexts/TravelOsContext";
 import { isNativeShell } from "./lib/platform";
-import { enterDemo, isDemoMode, leaveDemo } from "./lib/app-mode";
+import { enterDemo, isDemoMode } from "./lib/app-mode";
 import { DEMO_USERS } from "@shared/airpal-data";
 import StartPage from "./pages/StartPage";
 import ScanPage from "./pages/ScanPage";
@@ -82,12 +82,21 @@ function CampusRoute({ params }: { params?: { campusId?: string } }) {
 function DemoGate() {
   const [location] = useLocation();
   const { user, switchRole } = useAuth();
+  const { setPropertyId } = useAirPal();
   useEffect(() => {
+    // Explicit /demo entry only — never auto-demo on the live marketing site.
+    // Stay on /demo/* sandbox routes (do not rewrite into live /host|/admin|/stay).
     if (location === "/demo" || location.startsWith("/demo/")) {
       enterDemo();
-      if (!user) switchRole("host_admin");
+      setPropertyId("harbour-hotel");
+      if (!user) {
+        const segment = location.replace(/^\/demo\/?/, "").split("/")[0] || "";
+        if (segment === "admin") switchRole("super_admin");
+        else if (segment === "stay" || segment.startsWith("g")) switchRole("guest");
+        else switchRole("host_admin");
+      }
     }
-  }, [location, user, switchRole]);
+  }, [location, user, switchRole, setPropertyId]);
   return null;
 }
 
@@ -103,23 +112,27 @@ function HostGate() {
       } else if (location === "/admin" || location.startsWith("/admin/")) {
         setLocation("/demo/admin");
       }
+      return;
     }
+    if (location.startsWith("/host") && !user) setLocation("/start");
   }, [location, user, setLocation]);
   return null;
 }
 
 function LiveAuthGuard() {
-  const { user, logout } = useAuth();
+  const { user, exitDemoToLive } = useAuth();
   useEffect(() => {
+    // Live site must never keep a DEMO_USERS persona signed in.
     if (!isDemoMode() && user && DEMO_USERS.some((row) => row.uid === user.uid)) {
-      logout();
+      exitDemoToLive();
     }
-  }, [user, logout]);
+  }, [user, exitDemoToLive]);
   return null;
 }
 
 function MainApp() {
   const [location, setLocation] = useLocation();
+  const { exitDemoToLive } = useAuth();
   const native = isNativeShell();
   const demo = isDemoMode() || location.startsWith("/demo");
   const showChrome = demo && !native && !location.startsWith("/trip");
@@ -170,7 +183,7 @@ function MainApp() {
             else if (view === "admin") setLocation("/admin");
             else if (view === "auth") setLocation("/auth");
             else {
-              leaveDemo();
+              exitDemoToLive();
               setLocation("/");
             }
           }}

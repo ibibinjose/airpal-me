@@ -59,6 +59,7 @@ import { useLocation } from "wouter";
 import { DealItem, MenuItem, PropertyInfo, LocalPlace, StaffTicket, FacilityItem, RoomType } from "@shared/airpal-data";
 import { nanoid } from "nanoid";
 import { makeQrDataUrl, stayQrPayload, campusQrPayload } from "../lib/qr";
+import { DemoEntryPanel } from "../components/DemoEntryPanel";
 import { soundFx } from "../lib/sound";
 
 export const HostDashboard: React.FC = () => {
@@ -84,7 +85,7 @@ export const HostDashboard: React.FC = () => {
   } = useAirPal();
 
   const [activeSection, setActiveSection] = useState<
-    "overview" | "inbox" | "deals" | "menu" | "places" | "knowledge" | "qr-kit" | "analytics"
+    "overview" | "inbox" | "deals" | "menu" | "places" | "knowledge" | "qr-kit" | "analytics" | "demo"
   >("overview");
 
   const [ticketFilter, setTicketFilter] = useState<"all" | "pending" | "in_progress" | "resolved">("all");
@@ -666,6 +667,7 @@ export const HostDashboard: React.FC = () => {
               { id: "knowledge", label: "Property Compendium", icon: BedDouble },
               { id: "qr-kit", label: "Dynamic QR Kit", icon: QrCode },
               { id: "analytics", label: "Guest Intelligence", icon: BarChart3 },
+              { id: "demo", label: "Partner sample", icon: Sparkles },
             ].map((item) => {
               const Icon = item.icon;
               return (
@@ -752,6 +754,7 @@ export const HostDashboard: React.FC = () => {
               {activeSection === "knowledge" && "Property Compendium & Wi-Fi CMS"}
               {activeSection === "qr-kit" && "Dynamic QR Deployment Studio"}
               {activeSection === "analytics" && "Guest Demand & Search Intelligence"}
+              {activeSection === "demo" && "Show partners the sample"}
             </h1>
           </div>
 
@@ -2323,6 +2326,17 @@ export const HostDashboard: React.FC = () => {
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeSection === "demo" && (
+          <div className="max-w-xl animate-in fade-in">
+            <div className="p-5 rounded-3xl bg-white border border-[#dde3db] space-y-3">
+              <p className="text-xs text-[#5a6b62]">
+                Optional sales sample. Opens the Harbour Hotel demo without changing this live property. Leave demo to return here.
+              </p>
+              <DemoEntryPanel compact />
             </div>
           </div>
         )}

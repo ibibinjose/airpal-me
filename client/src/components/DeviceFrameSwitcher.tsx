@@ -21,8 +21,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { AirPalLogo } from "./BrandLogo";
-import { leaveDemo } from "../lib/app-mode";
-import { DEMO_USERS } from "@shared/airpal-data";
 
 interface Props {
   activeView: "companion" | "dashboard" | "landing" | "admin" | "auth" | "os" | "campus";
@@ -38,7 +36,7 @@ const VIEWS: { id: Props["activeView"]; label: string; icon: React.ReactNode }[]
 ];
 
 export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange }) => {
-  const { user, role, logout } = useAuth();
+  const { user, role, exitDemoToLive } = useAuth();
   const {
     deviceMode,
     setDeviceMode,
@@ -133,8 +131,7 @@ export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange 
           <button
             type="button"
             onClick={() => {
-              leaveDemo();
-              if (user && DEMO_USERS.some((row) => row.uid === user.uid)) logout();
+              exitDemoToLive();
               onViewChange("landing");
             }}
             className="hidden sm:flex items-center px-2.5 py-1.5 rounded-full bg-white border border-[#e3e9e1] text-[11px] text-[#5a6b62]"
