@@ -2,26 +2,24 @@ import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLocation } from "wouter";
 import {
-  ShieldCheck,
-  Building,
-  KeyRound,
-  UserCheck,
   Sparkles,
   ArrowRight,
-  CheckCircle2,
   Lock,
   Mail,
   User,
   Hotel,
 } from "lucide-react";
-import { DEMO_USERS } from "@shared/airpal-data";
 import { isDemoMode } from "../lib/app-mode";
+import { isBootstrapAdminEmail } from "../lib/bootstrap-admin";
+import { DemoEntryPanel } from "../components/DemoEntryPanel";
 
 export const AuthPage: React.FC = () => {
-  const { login, register, switchRole, role, user } = useAuth();
+  const { login, register, role, user, isHostAdmin, isSuperAdmin } = useAuth();
   const [, setLocation] = useLocation();
 
   const demo = isDemoMode();
+  // Demo tab: in demo mode, or after signing in as Platform Admin / host (never conflate with live admin).
+  const showDemoTab = demo || Boolean(user && (isHostAdmin || isSuperAdmin));
   const [tab, setTab] = useState<"login" | "register" | "roles">(demo ? "roles" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,11 +31,14 @@ export const AuthPage: React.FC = () => {
     e.preventDefault();
     if (!email) return;
     setLoading(true);
-    const ok = await login(email, password);
+    const profile = await login(email, password);
     setLoading(false);
-    if (!ok) return;
-    if (email.includes("admin")) {
+    if (!profile) return;
+    // Real Platform Admin (e.g. bibin.inc@gmail.com via bootstrap) lands on /admin.
+    if (profile.role === "super_admin") {
       setLocation("/admin");
+    } else if (profile.role === "guest") {
+      setLocation("/stay");
     } else {
       setLocation("/host");
     }
@@ -49,13 +50,17 @@ export const AuthPage: React.FC = () => {
     setLoading(true);
     const ok = await register(email, name, "host_admin", propertyName, { password });
     setLoading(false);
-    if (ok) setLocation("/host");
+    if (!ok) return;
+    if (isBootstrapAdminEmail(email)) {
+      setLocation("/admin");
+    } else {
+      setLocation("/host");
+    }
   };
 
   return (
     <div className="min-h-[calc(100vh-45px)] bg-[#f4f6f1] flex flex-col justify-center items-center py-10 px-4">
       <div className="w-full max-w-xl space-y-6">
-        {/* Header Branding */}
         <div className="text-center space-y-2">
           <img src="/logo.jpg" alt="AirPal.me" className="mx-auto h-28 w-28 object-contain" />
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300/40 text-xs font-semibold">
@@ -66,13 +71,12 @@ export const AuthPage: React.FC = () => {
             Hospitality Operating System
           </h1>
           <p className="text-xs text-[#5a6b62] max-w-sm mx-auto">
-            Hosts sign in here. Guests never create an account — they scan the QR on the desk.
+            Hosts and Platform Admin sign in here. Guests never create an account — they scan the QR on the desk.
           </p>
         </div>
 
-        {/* Auth Mode Tabs */}
         <div className="bg-white rounded-3xl border border-[#dde3db] shadow-xl overflow-hidden">
-          <div className={`grid ${demo ? "grid-cols-3" : "grid-cols-2"} border-b border-[#dde3db] text-xs font-bold text-center`}>
+          <div className={`grid ${showDemoTab ? "grid-cols-3" : "grid-cols-2"} border-b border-[#dde3db] text-xs font-bold text-center`}>
             <button
               onClick={() => setTab("login")}
               className={`py-3.5 transition-all ${
@@ -93,7 +97,7 @@ export const AuthPage: React.FC = () => {
             >
               Register Hotel
             </button>
-            {demo && (
+            {showDemoTab && (
               <button
                 onClick={() => setTab("roles")}
                 className={`py-3.5 transition-all ${
@@ -102,13 +106,12 @@ export const AuthPage: React.FC = () => {
                     : "text-stone-500 hover:text-stone-800"
                 }`}
               >
-                Demo roles
+                Demo
               </button>
             )}
           </div>
 
           <div className="p-6 sm:p-8">
-            {/* TAB 1: LOGIN */}
             {tab === "login" && (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1">
@@ -120,8 +123,9 @@ export const AuthPage: React.FC = () => {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="host@harbourhotel.com.au"
+                      placeholder="you@yourhotel.com"
                       className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#f8faf7] border border-[#dde3db] text-xs outline-none focus:border-amber-500 transition-colors"
+                      autoComplete="username"
                     />
                   </div>
                 </div>
@@ -136,6 +140,7 @@ export const AuthPage: React.FC = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••••••"
                       className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#f8faf7] border border-[#dde3db] text-xs outline-none focus:border-amber-500 transition-colors"
+                      autoComplete="current-password"
                     />
                   </div>
                 </div>
@@ -149,18 +154,25 @@ export const AuthPage: React.FC = () => {
                   <ArrowRight size={14} />
                 </button>
 
-                <div className="pt-2 text-center">
-                  <span className="text-[11px] text-stone-400">
+                <div className="pt-2 text-center space-y-1">
+                  <span className="text-[11px] text-stone-400 block">
                     New property?{" "}
                     <button type="button" onClick={() => setLocation("/start")} className="text-amber-700 font-bold hover:underline">
                       Start here
                     </button>
                   </span>
+                  {!showDemoTab && (
+                    <span className="text-[11px] text-stone-400 block">
+                      Want the sample hotel first?{" "}
+                      <button type="button" onClick={() => setLocation("/demo")} className="text-amber-700 font-bold hover:underline">
+                        Open Harbour Hotel demo
+                      </button>
+                    </span>
+                  )}
                 </div>
               </form>
             )}
 
-            {/* TAB 2: REGISTER PROPERTY */}
             {tab === "register" && (
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-1">
@@ -172,7 +184,7 @@ export const AuthPage: React.FC = () => {
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Marcus Sterling"
+                      placeholder="Your name"
                       className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#f8faf7] border border-[#dde3db] text-xs outline-none focus:border-amber-500"
                     />
                   </div>
@@ -241,77 +253,20 @@ export const AuthPage: React.FC = () => {
               </form>
             )}
 
-            {/* TAB 3: 1-CLICK DEMO ROLES */}
-            {tab === "roles" && (
-              <div className="space-y-3">
-                <p className="text-xs text-[#5a6b62] pb-1">
-                  Click any role below to test full capabilities without typing credentials:
-                </p>
-
-                {DEMO_USERS.map((demo) => {
-                  const isCurrent = user?.role === demo.role;
-                  return (
-                    <div
-                      key={demo.uid}
-                      onClick={() => {
-                        switchRole(demo.role, demo.propertyIds?.[0]);
-                        if (demo.role === "super_admin") setLocation("/admin");
-                        else if (demo.role === "guest") setLocation("/stay");
-                        else setLocation("/host");
-                      }}
-                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                        isCurrent
-                          ? "bg-amber-50 border-amber-400 shadow-sm"
-                          : "bg-white hover:bg-[#f6f9f5] border-[#dde3db]"
-                      }`}
-                    >
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-[#16211c]">
-                            {demo.displayName}
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
-                              demo.role === "super_admin"
-                                ? "bg-purple-100 text-purple-800"
-                                : demo.role === "host_admin"
-                                ? "bg-amber-100 text-amber-800"
-                                : demo.role === "staff"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-emerald-100 text-emerald-800"
-                            }`}
-                          >
-                            {demo.role.replace("_", " ")}
-                          </span>
-                        </div>
-                        <span className="text-[11px] text-stone-400 block">{demo.email}</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {isCurrent && (
-                          <span className="flex items-center gap-1 text-[11px] text-emerald-600 font-semibold">
-                            <CheckCircle2 size={14} /> Active
-                          </span>
-                        )}
-                        <ArrowRight size={14} className="text-stone-400" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+            {tab === "roles" && showDemoTab && (
+              <DemoEntryPanel />
             )}
           </div>
         </div>
 
-        {/* Current Active Persona Footer */}
-        <div className="p-3.5 rounded-2xl bg-white border border-[#dde3db] text-xs flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-stone-500">Currently active as:</span>
-            <strong className="text-[#16211c]">{user?.displayName || "Guest"}</strong>
+        <div className="p-3.5 rounded-2xl bg-white border border-[#dde3db] text-xs flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="text-stone-500 shrink-0">Currently active as:</span>
+            <strong className="text-[#16211c] truncate">{user?.displayName || "Signed out"}</strong>
           </div>
-          <span className="text-stone-400 font-mono text-[11px] capitalize">
-            Role: {role.replace("_", " ")}
+          <span className="text-stone-400 font-mono text-[11px] capitalize shrink-0">
+            {user ? `Role: ${role.replace("_", " ")}` : "Live sign-in"}
           </span>
         </div>
       </div>

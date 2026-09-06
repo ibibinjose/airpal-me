@@ -18,7 +18,7 @@ import { WalkingTourPage } from "./pages/WalkingTour";
 import { GuideProfilePage } from "./pages/GuideProfile";
 import { TravelOsProvider } from "./contexts/TravelOsContext";
 import { isNativeShell } from "./lib/platform";
-import { enterDemo, isDemoMode, leaveDemo } from "./lib/app-mode";
+import { enterDemo, isDemoMode } from "./lib/app-mode";
 import { DEMO_USERS } from "@shared/airpal-data";
 import StartPage from "./pages/StartPage";
 import ScanPage from "./pages/ScanPage";
@@ -80,10 +80,16 @@ function DemoGate() {
   const { user, switchRole } = useAuth();
   const { setPropertyId } = useAirPal();
   useEffect(() => {
+    // Explicit /demo entry only — never auto-demo on the live marketing site.
     if (location === "/demo" || location.startsWith("/demo/")) {
       enterDemo();
       setPropertyId("harbour-hotel");
-      if (!user) switchRole("host_admin");
+      const segment = location.replace(/^\/demo\/?/, "").split("/")[0] || "";
+      if (!user) {
+        if (segment === "admin") switchRole("super_admin");
+        else if (segment === "stay" || segment.startsWith("g")) switchRole("guest");
+        else switchRole("host_admin");
+      }
       const rest = location.replace(/^\/demo/, "") || "/os";
       setLocation(rest);
     }
@@ -101,17 +107,19 @@ function HostGate() {
 }
 
 function LiveAuthGuard() {
-  const { user, logout } = useAuth();
+  const { user, exitDemoToLive } = useAuth();
   useEffect(() => {
+    // Live site must never keep a DEMO_USERS persona signed in.
     if (!isDemoMode() && user && DEMO_USERS.some((row) => row.uid === user.uid)) {
-      logout();
+      exitDemoToLive();
     }
-  }, [user, logout]);
+  }, [user, exitDemoToLive]);
   return null;
 }
 
 function MainApp() {
   const [location, setLocation] = useLocation();
+  const { exitDemoToLive } = useAuth();
   const native = isNativeShell();
   const demo = isDemoMode() || location.startsWith("/demo");
   const showChrome = demo && !native && !location.startsWith("/trip");
@@ -162,7 +170,7 @@ function MainApp() {
             else if (view === "admin") setLocation("/admin");
             else if (view === "auth") setLocation("/auth");
             else {
-              leaveDemo();
+              exitDemoToLive();
               setLocation("/");
             }
           }}

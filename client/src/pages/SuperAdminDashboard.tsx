@@ -24,9 +24,10 @@ import { PropertyInfo, DealItem } from "@shared/airpal-data";
 import { loadAllProperties, saveProperty, loadPropertyDeals } from "../lib/airpal-backend";
 import { toast } from "sonner";
 import { nanoid } from "nanoid";
+import { DemoEntryPanel } from "../components/DemoEntryPanel";
 
 export const SuperAdminDashboard: React.FC = () => {
-  const { user, role, setActivePropertyId, switchRole } = useAuth();
+  const { user, role, setActivePropertyId, isSuperAdmin } = useAuth();
   const [, setLocation] = useLocation();
 
   const [properties, setProperties] = useState<PropertyInfo[]>(() => loadAllProperties());
@@ -103,8 +104,8 @@ export const SuperAdminDashboard: React.FC = () => {
   };
 
   const handleOpenHostAdmin = (propId: string) => {
+    // Stay on the live Platform Admin session — do not swap into DEMO_USERS host.
     setActivePropertyId(propId);
-    switchRole("host_admin", propId);
     setLocation("/host");
   };
 
@@ -112,6 +113,21 @@ export const SuperAdminDashboard: React.FC = () => {
     setActivePropertyId(propId);
     setLocation(`/g/${propId}`);
   };
+
+  if (!isSuperAdmin) {
+    return (
+      <div className="min-h-[calc(100vh-45px)] bg-[#f3f5f0] grid place-items-center p-6">
+        <div className="max-w-md w-full rounded-3xl bg-white border border-[#dde3db] p-8 text-center space-y-3">
+          <p className="text-[10px] font-mono uppercase tracking-wider text-purple-700">Platform Admin</p>
+          <h1 className="text-2xl font-bold">Sign in as Platform Admin</h1>
+          <p className="text-sm text-[#5a6b62]">This console is for the live Platform Admin account — not the Harbour Hotel demo persona.</p>
+          <button onClick={() => setLocation("/auth")} className="w-full py-3 rounded-xl bg-amber-400 font-bold text-xs text-stone-950">
+            Go to Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-45px)] bg-[#f3f5f0] text-[#16211c] p-4 sm:p-6 lg:p-8 space-y-6">
@@ -141,6 +157,7 @@ export const SuperAdminDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Global Platform KPIs */}
       {/* Global Platform KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#dde3db] space-y-1">
@@ -275,6 +292,12 @@ export const SuperAdminDashboard: React.FC = () => {
       </div>
 
       {/* Onboard Hotel Modal */}
+      <div className="p-4 rounded-3xl bg-white border border-dashed border-[#dde3db] max-w-xl">
+        <p className="text-[10px] font-mono uppercase tracking-wider text-stone-400 mb-2">Partner sample (optional)</p>
+        <p className="text-xs text-[#5a6b62] mb-3">Show customers Harbour Hotel without touching live properties.</p>
+        <DemoEntryPanel compact />
+      </div>
+
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl border border-[#dde3db] animate-in fade-in zoom-in-95">
