@@ -170,7 +170,11 @@ export const InRoomDiningModal: React.FC<Props> = ({ isOpen, onClose }) => {
                         ${item.price}
                       </span>
 
-                      {inCart ? (
+                      {item.available === false ? (
+                        <span className="px-2.5 py-1 rounded-xl bg-stone-100 text-stone-400 font-mono text-[10px] font-bold border border-stone-200">
+                          Sold Out
+                        </span>
+                      ) : inCart ? (
                         <div className="flex items-center gap-1.5 bg-[#f8e4c8] border border-amber-400/30 rounded-xl p-1 text-xs text-[#c57a32]">
                           <button
                             onClick={() => removeFromCart(item.id)}

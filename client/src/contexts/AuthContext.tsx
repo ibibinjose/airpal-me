@@ -22,12 +22,62 @@ interface StoredAccount {
   user: UserProfile;
 }
 
+const DEFAULT_ACCOUNTS: StoredAccount[] = [
+  {
+    email: "admin@airpal.me",
+    password: "password",
+    user: {
+      uid: "usr-super-admin",
+      email: "admin@airpal.me",
+      displayName: "Alexander Thorne (Platform Admin)",
+      role: "super_admin",
+      propertyIds: ["harbour-hotel", "the-rocks-suites"],
+      createdAt: "2026-09-01T00:00:00Z",
+    },
+  },
+  {
+    email: "host@airpal.me",
+    password: "password",
+    user: {
+      uid: "usr-host-admin",
+      email: "host@airpal.me",
+      displayName: "Eleanor Vance (Hotel GM)",
+      role: "host_admin",
+      propertyIds: ["harbour-hotel"],
+      createdAt: "2026-09-01T00:00:00Z",
+    },
+  },
+  {
+    email: "staff@airpal.me",
+    password: "password",
+    user: {
+      uid: "usr-staff-frontdesk",
+      email: "staff@airpal.me",
+      displayName: "Liam Chen (Front Desk Concierge)",
+      role: "staff",
+      propertyIds: ["harbour-hotel"],
+      createdAt: "2026-09-01T00:00:00Z",
+    },
+  },
+];
+
 function readAccounts(): StoredAccount[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return DEFAULT_ACCOUNTS;
   try {
-    return JSON.parse(window.localStorage.getItem(ACCOUNTS_KEY) || "[]") as StoredAccount[];
+    const raw = window.localStorage.getItem(ACCOUNTS_KEY);
+    if (!raw) {
+      writeAccounts(DEFAULT_ACCOUNTS);
+      return DEFAULT_ACCOUNTS;
+    }
+    const parsed = JSON.parse(raw) as StoredAccount[];
+    const emails = new Set(parsed.map((a) => a.email));
+    const merged = [...parsed];
+    DEFAULT_ACCOUNTS.forEach((d) => {
+      if (!emails.has(d.email)) merged.push(d);
+    });
+    return merged;
   } catch {
-    return [];
+    return DEFAULT_ACCOUNTS;
   }
 }
 

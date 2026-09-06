@@ -7,6 +7,7 @@ import {
   Compass,
   Utensils,
   BellRing,
+  Bell,
   ChevronRight,
   Star,
   ShieldAlert,
@@ -24,8 +25,12 @@ import {
   Wine,
   Luggage,
   Shirt,
+  Car,
   Train,
   Bus,
+  DoorOpen,
+  ChevronDown,
+  Key,
 } from "lucide-react";
 import { WifiCardModal } from "../components/companion/WifiCardModal";
 import { WhatToDoNowModal } from "../components/companion/WhatToDoNowModal";
@@ -34,6 +39,8 @@ import { TripModeModal } from "../components/companion/TripModeModal";
 import { InRoomDiningModal } from "../components/companion/InRoomDiningModal";
 import { SafetyModal } from "../components/companion/SafetyModal";
 import { StaffRequestModal } from "../components/companion/StaffRequestModal";
+import { GuestNotificationsModal } from "../components/companion/GuestNotificationsModal";
+import { RoomPickerModal } from "../components/companion/RoomPickerModal";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { HOTEL_EVENTS, TRANSPORT_OPTIONS } from "../../../shared/airpal-data";
@@ -60,6 +67,7 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
     toggleSavePlace,
     trackEvent,
     upsells,
+    unreadNotificationCount,
   } = useAirPal();
   const seededStay = isSeededProperty(property.id);
   const stayOffer = upsells.find((item) => item.category === "stay") || upsells[0];
@@ -72,7 +80,13 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
   const [diningModalOpen, setDiningModalOpen] = useState(false);
   const [safetyModalOpen, setSafetyModalOpen] = useState(false);
   const [staffModalOpen, setStaffModalOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [roomModalOpen, setRoomModalOpen] = useState(false);
   const [placeCategory, setPlaceCategory] = useState<string>("All");
+
+  const currentRoomType = property.roomTypes?.find((rt) =>
+    rt.roomNumbers?.includes(roomNumber)
+  );
 
   useEffect(() => {
     if (qrType === "emergency") setSafetyModalOpen(true);
@@ -115,15 +129,70 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
             <p className="ap-kicker">
               {guestName && guestName !== "Guest" ? `${t("welcome")}, ${guestName}` : t("welcome")}
             </p>
-            <span className="flex items-center gap-1 text-[11px] text-[#7a877f]">
-              {weather === "rainy" ? <CloudRain size={12} className="text-[#1d6aa5]" /> : <Sun size={12} className="text-[#c57a32]" />}
-              {weather === "rainy" ? "18°" : "24°"} · {scanLabel}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setRoomModalOpen(true)}
+                className="px-2.5 py-1 rounded-full bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 font-mono text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all active:scale-95"
+                title="Active Room Key - tap to view or switch room"
+              >
+                <DoorOpen size={13} className="text-amber-800" />
+                <span>Room {roomNumber}</span>
+                <ChevronDown size={11} className="text-amber-700 opacity-70" />
+              </button>
+              <span className="flex items-center gap-1 text-[11px] text-[#7a877f] px-1.5">
+                {weather === "rainy" ? <CloudRain size={12} className="text-[#1d6aa5]" /> : <Sun size={12} className="text-[#c57a32]" />}
+                {weather === "rainy" ? "18°" : "24°"}
+              </span>
+              <button
+                onClick={() => setNotificationsOpen(true)}
+                className="relative p-1.5 rounded-xl bg-white border border-[#dde3db] text-stone-700 hover:text-stone-950 transition-all shadow-xs active:scale-95"
+                title="Room Activity & Notifications"
+              >
+                <Bell size={13} />
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 text-white text-[8px] font-mono font-bold grid place-items-center animate-pulse">
+                    {unreadNotificationCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
           <h1 className={`ap-display leading-[1.05] mt-1 ${seniorMode ? "text-[34px]" : "text-[28px]"}`}>
             {property.name}
           </h1>
           <p className="text-xs text-[#7a877f] mt-1">{property.tagline}</p>
+
+          {/* Prominent Active Room Status Banner */}
+          <div className="mt-3 flex items-center justify-between p-2.5 px-3 rounded-2xl bg-white/95 border border-amber-200/90 shadow-2xs">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <div className="text-left truncate">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] uppercase tracking-wider font-mono text-stone-500 font-semibold">Active Guest Key:</span>
+                  <strong className="text-xs font-mono font-extrabold text-[#16211c]">Room {roomNumber}</strong>
+                  {currentRoomType && (
+                    <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-mono text-[9px] font-bold">
+                      {currentRoomType.category}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[11px] text-stone-500 block leading-tight truncate">
+                  {currentRoomType ? currentRoomType.name : "Sanctuary Guest Key"} · Direct Folio & Staff Connected
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setRoomModalOpen(true)}
+              className="shrink-0 px-2.5 py-1 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-semibold text-[11px] transition-colors border border-amber-300/70 shadow-2xs active:scale-95"
+            >
+              Switch Room
+            </button>
+          </div>
         </section>
 
         <section className="grid grid-cols-4 gap-2">
@@ -269,6 +338,13 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
                       {fac.icon === "Wine" && <Wine size={16} />}
                       {fac.icon === "Luggage" && <Luggage size={16} />}
                       {fac.icon === "Shirt" && <Shirt size={16} />}
+                      {fac.icon === "Sparkles" && <Sparkles size={16} />}
+                      {fac.icon === "Coffee" && <Coffee size={16} />}
+                      {fac.icon === "Utensils" && <Utensils size={16} />}
+                      {fac.icon === "Car" && <Car size={16} />}
+                      {fac.icon === "Wifi" && <Wifi size={16} />}
+                      {fac.icon === "BedDouble" && <BedDouble size={16} />}
+                      {!["Waves", "Dumbbell", "Wine", "Luggage", "Shirt", "Sparkles", "Coffee", "Utensils", "Car", "Wifi", "BedDouble"].includes(fac.icon) && <Sparkles size={16} />}
                     </div>
                     <div className="flex-1 space-y-0.5">
                       <div className="flex items-center justify-between">
@@ -594,6 +670,14 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
       <InRoomDiningModal isOpen={diningModalOpen} onClose={() => setDiningModalOpen(false)} />
       <SafetyModal isOpen={safetyModalOpen} onClose={() => setSafetyModalOpen(false)} />
       <StaffRequestModal isOpen={staffModalOpen} onClose={() => setStaffModalOpen(false)} />
+      <GuestNotificationsModal
+        isOpen={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        onOpenDining={() => setDiningModalOpen(true)}
+        onOpenStaff={() => setStaffModalOpen(true)}
+        onOpenWifi={() => setWifiModalOpen(true)}
+      />
+      <RoomPickerModal isOpen={roomModalOpen} onClose={() => setRoomModalOpen(false)} />
     </div>
   );
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAirPal, type QrType } from "../contexts/AirPalContext";
 import {
   Smartphone,
@@ -16,6 +16,8 @@ import {
   GraduationCap,
   SlidersHorizontal,
   X,
+  Clock,
+  MapPin,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { AirPalLogo } from "./BrandLogo";
@@ -54,6 +56,18 @@ export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange 
   const [demoOpen, setDemoOpen] = useState(false);
   const showDemo = activeView === "companion" || activeView === "os" || activeView === "campus";
 
+  const [liveTime, setLiveTime] = useState<string>("");
+  useEffect(() => {
+    const update = () => {
+      setLiveTime(
+        new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true })
+      );
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <header className="shrink-0 z-40 w-full border-b border-[#e3e9e1]/90 bg-[#fffdf9]/90 backdrop-blur-xl text-[#16211c]">
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-3">
@@ -83,6 +97,21 @@ export const DeviceFrameSwitcher: React.FC<Props> = ({ activeView, onViewChange 
               </button>
             ))}
           </nav>
+        </div>
+
+        {/* Real-time local time & weather widget */}
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-[#f4f6f1] border border-[#dde3db] text-[11px] font-mono text-stone-700 shadow-2xs">
+          <span className="flex h-1.5 w-1.5 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+          </span>
+          <Clock size={11} className="text-amber-600 shrink-0" />
+          <span className="font-semibold text-stone-900">{liveTime}</span>
+          <span className="text-stone-300">·</span>
+          <span className="text-amber-800 flex items-center gap-1 font-sans font-medium">
+            <Sun size={12} className="text-amber-500 shrink-0" />
+            21°C Sydney
+          </span>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">

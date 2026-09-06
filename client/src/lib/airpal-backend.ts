@@ -23,8 +23,15 @@ import {
   type LocalPlace,
 } from "@shared/airpal-data";
 import { ensureAnonymousSession, getFirebaseDb, isFirebaseConfigured } from "./firebase";
+import { isDemoMode } from "./app-mode";
 
 const PROPERTY_ID = "harbour-hotel";
+
+export function shouldBlockFirebase(propertyId?: string): boolean {
+  if (isDemoMode()) return true;
+  if (propertyId && propertyId.startsWith("demo-")) return true;
+  return false;
+}
 const LOCAL_PROPERTIES_KEY = "airpal.properties";
 const LOCAL_TICKETS_KEY = "airpal.tickets";
 const LOCAL_EVENTS_KEY = "airpal.events";
@@ -95,6 +102,7 @@ export async function trackAirPalEvent(
   const local = readLocal<AnalyticsEvent[]>(LOCAL_EVENTS_KEY, []);
   writeLocal(LOCAL_EVENTS_KEY, [event, ...local].slice(0, 200));
 
+  if (shouldBlockFirebase(event.propertyId)) return;
   const db = getFirebaseDb();
   if (!db) return;
   try {
@@ -122,6 +130,7 @@ export function persistLocalTickets(tickets: StaffTicket[]) {
 
 export async function syncTicketToBackend(ticket: StaffTicket, propertyId = PROPERTY_ID) {
   persistLocalTickets([ticket, ...loadLocalTickets().filter((item) => item.id !== ticket.id)]);
+  if (shouldBlockFirebase(propertyId)) return;
   const db = getFirebaseDb();
   if (!db) return;
   try {
@@ -139,6 +148,10 @@ export function subscribeToTickets(
   onTickets: (tickets: StaffTicket[]) => void,
   propertyId = PROPERTY_ID,
 ): () => void {
+  if (shouldBlockFirebase(propertyId)) {
+    onTickets(loadLocalTickets());
+    return () => undefined;
+  }
   const db = getFirebaseDb();
   if (!db) {
     onTickets(loadLocalTickets());
@@ -206,6 +219,7 @@ export async function recordTransaction(payload: {
   amount: number;
   kind: "upsell" | "experience" | "dining";
 }) {
+  if (shouldBlockFirebase(payload.propertyId)) return;
   const db = getFirebaseDb();
   if (!db) return;
   try {
@@ -241,16 +255,18 @@ export async function saveProperty(property: PropertyInfo): Promise<PropertyInfo
   const updated = [property, ...all.filter((p) => p.id !== property.id)];
   writeLocal(LOCAL_PROPERTIES_KEY, updated);
 
-  const db = getFirebaseDb();
-  if (db) {
-    try {
-      await ensureAnonymousSession();
-      await setDoc(doc(db, "properties", property.id), {
-        ...property,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (err) {
-      console.warn("Property sync to Firestore skipped", err);
+  if (!shouldBlockFirebase(property.id)) {
+    const db = getFirebaseDb();
+    if (db) {
+      try {
+        await ensureAnonymousSession();
+        await setDoc(doc(db, "properties", property.id), {
+          ...property,
+          updatedAt: serverTimestamp(),
+        });
+      } catch (err) {
+        console.warn("Property sync to Firestore skipped", err);
+      }
     }
   }
   return property;
@@ -291,16 +307,18 @@ export async function savePropertyDeal(propertyId: string, deal: DealItem): Prom
   const updated = exists ? deals.map((d) => (d.id === deal.id ? deal : d)) : [deal, ...deals];
   writeLocal(`${LOCAL_DEALS_PREFIX}${propertyId}`, updated);
 
-  const db = getFirebaseDb();
-  if (db) {
-    try {
-      await ensureAnonymousSession();
-      await setDoc(doc(db, "properties", propertyId, "deals", deal.id), {
-        ...deal,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (err) {
-      console.warn("Deal sync skipped", err);
+  if (!shouldBlockFirebase(propertyId)) {
+    const db = getFirebaseDb();
+    if (db) {
+      try {
+        await ensureAnonymousSession();
+        await setDoc(doc(db, "properties", propertyId, "deals", deal.id), {
+          ...deal,
+          updatedAt: serverTimestamp(),
+        });
+      } catch (err) {
+        console.warn("Deal sync skipped", err);
+      }
     }
   }
   return deal;
@@ -328,16 +346,18 @@ export async function savePropertyMenuItem(propertyId: string, item: MenuItem): 
   const updated = exists ? menu.map((m) => (m.id === item.id ? item : m)) : [item, ...menu];
   writeLocal(`${LOCAL_MENU_PREFIX}${propertyId}`, updated);
 
-  const db = getFirebaseDb();
-  if (db) {
-    try {
-      await ensureAnonymousSession();
-      await setDoc(doc(db, "properties", propertyId, "menu", item.id), {
-        ...item,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (err) {
-      console.warn("Menu item sync skipped", err);
+  if (!shouldBlockFirebase(propertyId)) {
+    const db = getFirebaseDb();
+    if (db) {
+      try {
+        await ensureAnonymousSession();
+        await setDoc(doc(db, "properties", propertyId, "menu", item.id), {
+          ...item,
+          updatedAt: serverTimestamp(),
+        });
+      } catch (err) {
+        console.warn("Menu item sync skipped", err);
+      }
     }
   }
   return item;

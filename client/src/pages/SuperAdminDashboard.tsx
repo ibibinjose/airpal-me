@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLocation } from "wouter";
+import { ProtectedRoute } from "../components/ProtectedRoute";
+import { RealtimeTopBar } from "../components/RealtimeTopBar";
 import {
   ShieldAlert,
   Building2,
@@ -19,6 +21,8 @@ import {
   ChevronRight,
   ShieldCheck,
   Percent,
+  LogOut,
+  ArrowLeft,
 } from "lucide-react";
 import { PropertyInfo, DealItem } from "@shared/airpal-data";
 import { loadAllProperties, saveProperty, loadPropertyDeals } from "../lib/airpal-backend";
@@ -27,7 +31,7 @@ import { nanoid } from "nanoid";
 import { DemoEntryPanel } from "../components/DemoEntryPanel";
 
 export const SuperAdminDashboard: React.FC = () => {
-  const { user, role, setActivePropertyId, isSuperAdmin } = useAuth();
+  const { user, role, setActivePropertyId, isSuperAdmin, logout } = useAuth();
   const [, setLocation] = useLocation();
 
   const [properties, setProperties] = useState<PropertyInfo[]>(() => loadAllProperties());
@@ -130,32 +134,76 @@ export const SuperAdminDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-45px)] bg-[#f3f5f0] text-[#16211c] p-4 sm:p-6 lg:p-8 space-y-6">
-      {/* Top Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#dde3db]">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 text-[10px] font-mono font-bold uppercase border border-purple-300/40 flex items-center gap-1">
-              <ShieldCheck size={12} className="text-purple-700" />
-              Platform Super Admin Control
+    <ProtectedRoute allowedRoles={["super_admin"]} resourceName="Platform Super Admin Portal">
+      <div className="min-h-screen bg-[#f3f5f0] text-[#16211c] flex flex-col font-sans">
+        <RealtimeTopBar className="sticky top-0 z-40 border-b border-[#dde3db]" />
+
+        {/* Super Admin Session Strip */}
+        <div className="bg-stone-900 text-white px-4 sm:px-8 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs border-b border-stone-800">
+          <div className="flex items-center gap-3">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-medium text-stone-300">
+              Signed in as <strong className="text-white">{user?.displayName || user?.email}</strong>
             </span>
-            <span className="text-xs text-stone-400 font-mono">AirPal Cloud OS v2.4</span>
+            <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono text-[10px] font-bold uppercase border border-purple-500/30">
+              Role: Super Admin
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#16211c]">
-            Global Hospitality Network
-          </h1>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setLocation("/host")}
+              className="px-3 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs transition-colors flex items-center gap-1.5"
+            >
+              <span>Host Operations</span>
+              <ArrowUpRight size={13} />
+            </button>
+            <button
+              onClick={() => setLocation("/")}
+              className="px-3 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs transition-colors flex items-center gap-1.5"
+            >
+              <ArrowLeft size={13} />
+              <span>Public Home</span>
+            </button>
+            <button
+              onClick={() => {
+                logout();
+                setLocation("/auth");
+              }}
+              className="px-3 py-1 rounded-lg bg-red-950/70 hover:bg-red-900/70 text-red-200 text-xs transition-colors flex items-center gap-1.5 border border-red-800/40"
+            >
+              <LogOut size={13} />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 font-bold text-xs text-stone-950 transition-all shadow active:scale-95"
-          >
-            <Plus size={15} />
-            <span>Onboard New Hotel</span>
-          </button>
-        </div>
-      </div>
+        <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6">
+          {/* Top Banner */}
+          <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#dde3db]">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 text-[10px] font-mono font-bold uppercase border border-purple-300/40 flex items-center gap-1">
+                  <ShieldCheck size={12} className="text-purple-700" />
+                  Platform Super Admin Control
+                </span>
+                <span className="text-xs text-stone-400 font-mono">AirPal Cloud OS v2.4</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#16211c]">
+                Global Hospitality Network
+              </h1>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 font-bold text-xs text-stone-950 transition-all shadow active:scale-95"
+              >
+                <Plus size={15} />
+                <span>Onboard New Hotel</span>
+              </button>
+            </div>
+          </div>
 
       {/* Global Platform KPIs */}
       {/* Global Platform KPIs */}
@@ -408,6 +456,8 @@ export const SuperAdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+        </div>
+      </div>
+    </ProtectedRoute>
   );
 };

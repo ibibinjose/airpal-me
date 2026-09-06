@@ -23,6 +23,10 @@ import { DEMO_USERS } from "@shared/airpal-data";
 import StartPage from "./pages/StartPage";
 import ScanPage from "./pages/ScanPage";
 import { useAuth } from "./contexts/AuthContext";
+import { DemoHub } from "./demo/DemoHub";
+import { DemoAdminPage } from "./demo/DemoAdminPage";
+import { DemoHostPage } from "./demo/DemoHostPage";
+import { DemoStayPage } from "./demo/DemoStayPage";
 
 function parseQrType(value: string | null): QrType | null {
   if (value === "room" || value === "property" || value === "dining" || value === "experience" || value === "emergency") {
@@ -76,24 +80,23 @@ function CampusRoute({ params }: { params?: { campusId?: string } }) {
 }
 
 function DemoGate() {
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
   const { user, switchRole } = useAuth();
   const { setPropertyId } = useAirPal();
   useEffect(() => {
     // Explicit /demo entry only — never auto-demo on the live marketing site.
+    // Stay on /demo/* sandbox routes (do not rewrite into live /host|/admin|/stay).
     if (location === "/demo" || location.startsWith("/demo/")) {
       enterDemo();
       setPropertyId("harbour-hotel");
-      const segment = location.replace(/^\/demo\/?/, "").split("/")[0] || "";
       if (!user) {
+        const segment = location.replace(/^\/demo\/?/, "").split("/")[0] || "";
         if (segment === "admin") switchRole("super_admin");
         else if (segment === "stay" || segment.startsWith("g")) switchRole("guest");
         else switchRole("host_admin");
       }
-      const rest = location.replace(/^\/demo/, "") || "/os";
-      setLocation(rest);
     }
-  }, [location, setLocation, user, switchRole, setPropertyId]);
+  }, [location, user, switchRole, setPropertyId]);
   return null;
 }
 
@@ -101,7 +104,17 @@ function HostGate() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   useEffect(() => {
-    if (location.startsWith("/host") && !user && !isDemoMode()) setLocation("/start");
+    // STRICT BARRIER: Prevent demo session or demo user from ever accessing real production /admin or /host
+    const isDemoAccount = user && DEMO_USERS.some((row) => row.uid === user.uid);
+    if (isDemoMode() || isDemoAccount) {
+      if (location === "/host" || location.startsWith("/host/")) {
+        setLocation("/demo/host");
+      } else if (location === "/admin" || location.startsWith("/admin/")) {
+        setLocation("/demo/admin");
+      }
+      return;
+    }
+    if (location.startsWith("/host") && !user) setLocation("/start");
   }, [location, user, setLocation]);
   return null;
 }
@@ -178,11 +191,19 @@ function MainApp() {
       )}
       <div className={lockViewport ? "flex-1 min-h-0 overflow-hidden" : "flex-1"}>
         <Switch>
+          {/* DEMO SANDBOX SUITE - 100% ISOLATED */}
+          <Route path="/demo/admin" component={DemoAdminPage} />
+          <Route path="/demo/host" component={DemoHostPage} />
+          <Route path="/demo/stay" component={DemoStayPage} />
+          <Route path="/demo/os" component={TravelOs} />
+          <Route path="/demo/campus" component={CampusRoute} />
+          <Route path="/demo" component={DemoHub} />
+
+          {/* REAL PRODUCTION SUITE */}
           <Route path="/admin" component={SuperAdminDashboard} />
           <Route path="/auth" component={AuthPage} />
           <Route path="/start" component={StartPage} />
           <Route path="/scan" component={ScanPage} />
-          <Route path="/demo" component={TravelOs} />
           <Route path="/host" component={HostDashboard} />
           <Route path="/os" component={TravelOs} />
           <Route path="/stay" component={GuestRoute} />
