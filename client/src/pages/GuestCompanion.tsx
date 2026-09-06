@@ -126,9 +126,19 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
       <div className="guest-scroll flex-1 px-5 pt-5 pb-16 space-y-5">
         <section>
           <div className="flex items-center justify-between gap-2">
-            <p className="ap-kicker">
-              {guestName && guestName !== "Guest" ? `${t("welcome")}, ${guestName}` : t("welcome")}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setLocation("/")}
+                className="text-[10px] font-mono uppercase font-bold text-stone-400 hover:text-stone-800 transition-colors"
+                title="AirPal Portal Launchpad"
+              >
+                AirPal ·
+              </button>
+              <p className="ap-kicker">
+                {guestName && guestName !== "Guest" ? `${t("welcome")}, ${guestName}` : t("welcome")}
+              </p>
+            </div>
             <div className="flex items-center gap-1.5">
               <button
                 type="button"

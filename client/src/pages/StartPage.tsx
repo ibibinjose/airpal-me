@@ -72,7 +72,13 @@ export default function StartPage() {
   return (
     <div className="min-h-dvh bg-[#f9f8f4] text-[#16211c]">
       <div className="max-w-lg mx-auto px-4 py-10 space-y-6">
-        <div className="text-center">
+        <div className="text-center space-y-2">
+          <button
+            onClick={() => setLocation("/")}
+            className="text-xs font-semibold text-stone-500 hover:text-stone-900 transition-colors inline-flex items-center gap-1 mb-2"
+          >
+            ← AirPal Portal
+          </button>
           <img src="/logo-mark.png" alt="" className="mx-auto w-12 h-12 object-contain" />
           <p className="ap-kicker mt-3">Get started</p>
           <h1 className="ap-display text-3xl mt-1">From signup to a QR on the door</h1>

@@ -163,7 +163,7 @@ export const SuperAdminDashboard: React.FC = () => {
               className="px-3 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs transition-colors flex items-center gap-1.5"
             >
               <ArrowLeft size={13} />
-              <span>Public Home</span>
+              <span>AirPal OS</span>
             </button>
             <button
               onClick={() => {

@@ -571,6 +571,13 @@ export const HostDashboard: React.FC = () => {
               </button>
             )}
             <button
+              onClick={() => setLocation("/")}
+              className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs transition-colors flex items-center gap-1"
+              title="AirPal Home Launchpad"
+            >
+              <span>AirPal OS</span>
+            </button>
+            <button
               onClick={() =>
                 setLocation(
                   property.kind === "campus"

@@ -46,9 +46,14 @@ export default function ScanPage() {
             <ArrowRight size={16} />
           </button>
         </div>
-        <button onClick={() => setLocation("/start")} className="text-[11px] text-[#7a877f]">
-          I’m a host — create a property
-        </button>
+        <div className="flex items-center justify-between text-xs text-stone-500 pt-2 border-t border-stone-200">
+          <button onClick={() => setLocation("/")} className="hover:text-stone-900 font-medium">
+            ← AirPal Portal
+          </button>
+          <button onClick={() => setLocation("/auth")} className="text-amber-700 hover:text-amber-800 font-semibold">
+            Host Sign In →
+          </button>
+        </div>
       </div>
       <QrScanSheet
         isOpen={scanOpen}

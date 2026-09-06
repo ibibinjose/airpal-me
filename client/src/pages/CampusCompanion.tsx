@@ -160,7 +160,17 @@ export const CampusCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) 
           <>
             <section>
               <div className="flex items-center justify-between gap-2">
-                <p className="ap-kicker">Welcome, {guestName}</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setLocation("/")}
+                    className="text-[11px] font-bold text-stone-500 hover:text-stone-900 transition-colors flex items-center gap-1 bg-stone-200/50 hover:bg-stone-200 px-2 py-0.5 rounded-full"
+                    title="Return to AirPal OS Launchpad"
+                  >
+                    <span>AirPal</span>
+                    <span className="text-[9px] opacity-60">·</span>
+                  </button>
+                  <p className="ap-kicker">Welcome, {guestName}</p>
+                </div>
                 <span className="flex items-center gap-1 text-[11px] text-[#7a877f]">
                   {weather === "rainy" ? <CloudRain size={12} className="text-[#1d6aa5]" /> : <Sun size={12} className="text-[#c57a32]" />}
                   {weather === "rainy" ? "18°" : "24°"} · {room}

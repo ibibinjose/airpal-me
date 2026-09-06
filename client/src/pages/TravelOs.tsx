@@ -167,7 +167,17 @@ function TravelOsInner() {
       <header className="shrink-0 px-5 pt-4 pb-3 bg-[#fffdf9]">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <p className="ap-kicker">Your journey</p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setLocation("/")}
+                className="text-[11px] font-bold text-stone-500 hover:text-stone-900 transition-colors flex items-center gap-1 bg-stone-200/50 hover:bg-stone-200 px-2 py-0.5 rounded-full"
+                title="Return to AirPal OS Launchpad"
+              >
+                <span>AirPal</span>
+                <span className="text-[9px] opacity-60">·</span>
+              </button>
+              <p className="ap-kicker">Your journey</p>
+            </div>
             <h1 className="ap-display text-[26px] leading-[1.05] truncate">{trip?.city || "AirPal"}</h1>
             <p className="text-xs text-[#7a877f] mt-0.5 truncate">{trip?.title}</p>
           </div>
