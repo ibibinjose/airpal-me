@@ -38,6 +38,7 @@ import {
   savePropertyPlace,
   deletePropertyPlace,
 } from "../lib/airpal-backend";
+import { soundFx } from "../lib/sound";
 
 export type DeviceMode = "iphone" | "android" | "tablet" | "responsive";
 export type QrType = "room" | "property" | "dining" | "experience" | "emergency";
@@ -46,6 +47,15 @@ export type WeatherType = "sunny" | "rainy";
 export interface CartItem {
   item: MenuItem;
   quantity: number;
+}
+
+export interface GuestNotification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  type: "order" | "service" | "info" | "wifi";
+  read: boolean;
 }
 
 interface AirPalContextType {
@@ -95,6 +105,11 @@ interface AirPalContextType {
   updateMenuItem: (item: MenuItem) => Promise<void>;
   removeMenuItem: (itemId: string) => Promise<void>;
   upsells: UpsellItem[];
+  notifications: GuestNotification[];
+  unreadNotificationCount: number;
+  addNotification: (notif: Omit<GuestNotification, "id" | "timestamp" | "read">) => void;
+  markNotificationRead: (id: string) => void;
+  clearAllNotifications: () => void;
   trackEvent: (name: string, payload?: Record<string, string | number | boolean | null>) => void;
 }
 
@@ -118,6 +133,46 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [activeUpsells, setActiveUpsells] = useState<string[]>([]);
   const [savedPlaces, setSavedPlaces] = useState<string[]>(["p1", "p4"]);
 
+  // Notifications State for In-Room Companion
+  const [notifications, setNotifications] = useState<GuestNotification[]>([
+    {
+      id: "notif-welcome",
+      title: "Welcome to " + property.name,
+      message: "High-speed Wi-Fi is active. Tap to view your room compendium and dining menu.",
+      timestamp: "Just now",
+      type: "info",
+      read: false,
+    },
+    {
+      id: "notif-wifi",
+      title: "Fibre Wi-Fi Connected",
+      message: `SSID: ${property.wifi?.network || "HarbourHotel_Guest"} · Pass: ${property.wifi?.password || "welcomeguest2026"}`,
+      timestamp: "Just now",
+      type: "wifi",
+      read: false,
+    },
+  ]);
+
+  const addNotification = useCallback((notif: Omit<GuestNotification, "id" | "timestamp" | "read">) => {
+    const newN: GuestNotification = {
+      ...notif,
+      id: `n-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      timestamp: "Just now",
+      read: false,
+    };
+    setNotifications((prev) => [newN, ...prev]);
+  }, []);
+
+  const markNotificationRead = (id: string) => {
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+  };
+
+  const unreadNotificationCount = notifications.filter((n) => !n.read).length;
+
   // Dynamic Data collections
   const [deals, setDeals] = useState<DealItem[]>(() => loadPropertyDeals(propertyId));
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => loadPropertyMenu(propertyId));
@@ -133,6 +188,7 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, []);
 
   const updateProperty = async (updated: PropertyInfo) => {
+    soundFx.playSuccessTick();
     setProperty(updated);
     await saveProperty(updated);
     toast.success("Property Compendium Updated", {
@@ -141,6 +197,7 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const addDeal = async (deal: DealItem) => {
+    soundFx.playSuccessTick();
     await savePropertyDeal(property.id, deal);
     setDeals(loadPropertyDeals(property.id));
     toast.success("New Deal Published", {
@@ -149,18 +206,21 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const updateDeal = async (deal: DealItem) => {
+    soundFx.playSuccessTick();
     await savePropertyDeal(property.id, deal);
     setDeals(loadPropertyDeals(property.id));
     toast.info("Deal Updated");
   };
 
   const removeDeal = async (dealId: string) => {
+    soundFx.playSuccessTick();
     await deletePropertyDeal(property.id, dealId);
     setDeals(loadPropertyDeals(property.id));
     toast.info("Deal Removed");
   };
 
   const addMenuItem = async (item: MenuItem) => {
+    soundFx.playSuccessTick();
     await savePropertyMenuItem(property.id, item);
     setMenuItems(loadPropertyMenu(property.id));
     toast.success("Menu Item Added", {
@@ -169,24 +229,28 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const updateMenuItem = async (item: MenuItem) => {
+    soundFx.playSuccessTick();
     await savePropertyMenuItem(property.id, item);
     setMenuItems(loadPropertyMenu(property.id));
     toast.info("Menu Item Updated");
   };
 
   const removeMenuItem = async (itemId: string) => {
+    soundFx.playSuccessTick();
     await deletePropertyMenuItem(property.id, itemId);
     setMenuItems(loadPropertyMenu(property.id));
     toast.info("Menu Item Removed");
   };
 
   const addPlace = async (place: LocalPlace) => {
+    soundFx.playSuccessTick();
     await savePropertyPlace(property.id, place);
     setPlaces(loadPropertyPlaces(property.id));
     toast.success("Local Recommendation Added");
   };
 
   const removePlace = async (placeId: string) => {
+    soundFx.playSuccessTick();
     await deletePropertyPlace(property.id, placeId);
     setPlaces(loadPropertyPlaces(property.id));
     toast.info("Recommendation Removed");
@@ -232,6 +296,7 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, [staffTickets]);
 
   const addStaffTicket = (category: StaffTicket["category"], details: string, urgency: "normal" | "urgent" = "normal"): StaffTicket => {
+    soundFx.playDeskBell();
     const newTicket: StaffTicket = {
       id: `t-${Date.now().toString().slice(-4)}`,
       propertyId: property.id,
@@ -246,6 +311,13 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setStaffTickets((prev) => [newTicket, ...prev]);
     void syncTicketToBackend(newTicket, property.id);
     trackEvent("staff_request", { category, urgency });
+
+    addNotification({
+      title: `Staff Request Sent 🛎️ (${category.replace("_", " ")})`,
+      message: `Room ${roomNumber}: "${details.slice(0, 50)}" received by Front Desk.`,
+      type: "service",
+    });
+
     toast.success("Staff Notification Sent", {
       description: `Front Desk received your ${category.replace("_", " ")} request for Room ${roomNumber}.`,
     });
@@ -253,16 +325,27 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const updateTicketStatus = (ticketId: string, status: StaffTicket["status"]) => {
+    soundFx.playGuestChime();
     setStaffTickets((prev) =>
       prev.map((ticket) => (ticket.id === ticketId ? { ...ticket, status } : ticket))
     );
     void updateRemoteTicket(ticketId, status, property.id);
+
+    const found = staffTickets.find((t) => t.id === ticketId);
+    const room = found?.roomNumber || roomNumber;
+    addNotification({
+      title: status === "in_progress" ? "Staff Dispatched 🛎️" : status === "resolved" ? "Request Resolved ✓" : "Request Updated",
+      message: `Room ${room}: Request status is now ${status.replace("_", " ")}.`,
+      type: "service",
+    });
+
     toast.info("Ticket Updated", {
       description: `Request status changed to ${status.replace("_", " ")}.`,
     });
   };
 
   const addToCart = (item: MenuItem) => {
+    soundFx.playSuccessTick();
     setCart((prev) => {
       const existing = prev.find((ci) => ci.item.id === item.id);
       if (existing) {
@@ -276,6 +359,7 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const removeFromCart = (itemId: string) => {
+    soundFx.playSuccessTick();
     setCart((prev) => {
       const existing = prev.find((ci) => ci.item.id === itemId);
       if (existing && existing.quantity > 1) {
@@ -299,6 +383,7 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setActiveUpsells((prev) => [...prev, upsellId]);
     const up = upsells.find((item) => item.id === upsellId) || HOTEL_UPSELLS.find((item) => item.id === upsellId);
     if (up) {
+      soundFx.playSuccessTick();
       void recordTransaction({
         propertyId: property.id,
         roomNumber,
@@ -307,6 +392,12 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         kind: "upsell",
       });
       trackEvent("upsell_purchase", { upsellId, amount: up.price });
+
+      addNotification({
+        title: `Folio Charged: ${up.title}`,
+        message: `$${up.price} billed to Room ${roomNumber}.`,
+        type: "order",
+      });
     }
     toast.success("Added to Room Folio", {
       description: `${up?.title} has been billed to Room ${roomNumber}. Confirmation sent.`,
@@ -371,6 +462,11 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         updateMenuItem,
         removeMenuItem,
         upsells,
+        notifications,
+        unreadNotificationCount,
+        addNotification,
+        markNotificationRead,
+        clearAllNotifications,
         trackEvent,
       }}
     >

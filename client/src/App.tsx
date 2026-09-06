@@ -103,10 +103,6 @@ function HostGate() {
       } else if (location === "/admin" || location.startsWith("/admin/")) {
         setLocation("/demo/admin");
       }
-    } else {
-      // Real app protection: require real authenticated account
-      if (location.startsWith("/host") && !user) setLocation("/start");
-      if (location.startsWith("/admin") && !user) setLocation("/auth");
     }
   }, [location, user, setLocation]);
   return null;

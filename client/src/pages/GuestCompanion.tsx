@@ -7,6 +7,7 @@ import {
   Compass,
   Utensils,
   BellRing,
+  Bell,
   ChevronRight,
   Star,
   ShieldAlert,
@@ -34,6 +35,7 @@ import { TripModeModal } from "../components/companion/TripModeModal";
 import { InRoomDiningModal } from "../components/companion/InRoomDiningModal";
 import { SafetyModal } from "../components/companion/SafetyModal";
 import { StaffRequestModal } from "../components/companion/StaffRequestModal";
+import { GuestNotificationsModal } from "../components/companion/GuestNotificationsModal";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { HOTEL_EVENTS, TRANSPORT_OPTIONS } from "../../../shared/airpal-data";
@@ -60,6 +62,7 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
     toggleSavePlace,
     trackEvent,
     upsells,
+    unreadNotificationCount,
   } = useAirPal();
   const seededStay = isSeededProperty(property.id);
   const stayOffer = upsells.find((item) => item.category === "stay") || upsells[0];
@@ -72,6 +75,7 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
   const [diningModalOpen, setDiningModalOpen] = useState(false);
   const [safetyModalOpen, setSafetyModalOpen] = useState(false);
   const [staffModalOpen, setStaffModalOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [placeCategory, setPlaceCategory] = useState<string>("All");
 
   useEffect(() => {
@@ -115,10 +119,24 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
             <p className="ap-kicker">
               {guestName && guestName !== "Guest" ? `${t("welcome")}, ${guestName}` : t("welcome")}
             </p>
-            <span className="flex items-center gap-1 text-[11px] text-[#7a877f]">
-              {weather === "rainy" ? <CloudRain size={12} className="text-[#1d6aa5]" /> : <Sun size={12} className="text-[#c57a32]" />}
-              {weather === "rainy" ? "18°" : "24°"} · {scanLabel}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1 text-[11px] text-[#7a877f]">
+                {weather === "rainy" ? <CloudRain size={12} className="text-[#1d6aa5]" /> : <Sun size={12} className="text-[#c57a32]" />}
+                {weather === "rainy" ? "18°" : "24°"} · {scanLabel}
+              </span>
+              <button
+                onClick={() => setNotificationsOpen(true)}
+                className="relative p-1.5 rounded-xl bg-white border border-[#dde3db] text-stone-700 hover:text-stone-950 transition-all shadow-xs active:scale-95"
+                title="Room Activity & Notifications"
+              >
+                <Bell size={13} />
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 text-white text-[8px] font-mono font-bold grid place-items-center animate-pulse">
+                    {unreadNotificationCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
           <h1 className={`ap-display leading-[1.05] mt-1 ${seniorMode ? "text-[34px]" : "text-[28px]"}`}>
             {property.name}
@@ -594,6 +612,13 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
       <InRoomDiningModal isOpen={diningModalOpen} onClose={() => setDiningModalOpen(false)} />
       <SafetyModal isOpen={safetyModalOpen} onClose={() => setSafetyModalOpen(false)} />
       <StaffRequestModal isOpen={staffModalOpen} onClose={() => setStaffModalOpen(false)} />
+      <GuestNotificationsModal
+        isOpen={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        onOpenDining={() => setDiningModalOpen(true)}
+        onOpenStaff={() => setStaffModalOpen(true)}
+        onOpenWifi={() => setWifiModalOpen(true)}
+      />
     </div>
   );
 

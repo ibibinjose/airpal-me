@@ -23,15 +23,13 @@ import {
   Laptop,
   HelpCircle,
 } from "lucide-react";
-import { DEMO_USERS } from "@shared/airpal-data";
 import { RealtimeTopBar } from "../components/RealtimeTopBar";
-import { enterDemo } from "../lib/app-mode";
 
 export const AuthPage: React.FC = () => {
   const { login, register, switchRole, role, user } = useAuth();
   const [, setLocation] = useLocation();
 
-  const [tab, setTab] = useState<"login" | "register" | "roles">("login");
+  const [tab, setTab] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -182,7 +180,7 @@ export const AuthPage: React.FC = () => {
             </div>
 
             {/* Mode Switcher Tabs */}
-            <div className="p-1 rounded-2xl bg-[#f0f4ee] border border-[#dde3db] grid grid-cols-3 text-xs font-semibold">
+            <div className="p-1 rounded-2xl bg-[#f0f4ee] border border-[#dde3db] grid grid-cols-2 text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => setTab("login")}
@@ -204,18 +202,6 @@ export const AuthPage: React.FC = () => {
                 }`}
               >
                 Register Hotel
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab("roles")}
-                className={`py-2 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-1 ${
-                  tab === "roles"
-                    ? "bg-amber-400 text-stone-950 font-bold shadow-sm"
-                    : "text-amber-800 hover:text-amber-950"
-                }`}
-              >
-                <Sparkles size={13} />
-                <span>Demo Roles</span>
               </button>
             </div>
 
@@ -275,18 +261,6 @@ export const AuthPage: React.FC = () => {
                     </>
                   )}
                 </button>
-
-                <div className="p-3.5 rounded-2xl bg-[#f4f7f2] border border-[#dde3db] text-[11px] text-[#4a5a50] flex items-center justify-between">
-                  <span>Testing without credentials?</span>
-                  <button
-                    type="button"
-                    onClick={() => setTab("roles")}
-                    className="font-bold text-amber-800 hover:underline flex items-center gap-1"
-                  >
-                    <span>Use 1-Click Fast Pass</span>
-                    <ArrowRight size={12} />
-                  </button>
-                </div>
               </form>
             )}
 
@@ -383,85 +357,6 @@ export const AuthPage: React.FC = () => {
                   </button>
                 </p>
               </form>
-            )}
-
-            {/* TAB 3: 1-CLICK DEMO ROLES */}
-            {tab === "roles" && (
-              <div className="space-y-3 animate-in fade-in">
-                <div className="p-3 rounded-2xl bg-amber-50/80 border border-amber-200/70 text-xs text-amber-950 flex items-center justify-between">
-                  <span className="font-semibold">Isolated Demo Sandbox · Zero Real Data Access</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      enterDemo();
-                      setLocation("/demo");
-                    }}
-                    className="font-mono text-[10px] font-bold text-amber-800 hover:underline uppercase"
-                  >
-                    Open Demo Hub →
-                  </button>
-                </div>
-
-                <div className="space-y-2.5">
-                  {DEMO_USERS.map((demo) => {
-                    const isCurrent = user?.role === demo.role;
-                    return (
-                      <div
-                        key={demo.uid}
-                        onClick={() => {
-                          enterDemo();
-                          switchRole(demo.role, demo.propertyIds?.[0]);
-                          if (demo.role === "super_admin") setLocation("/demo/admin");
-                          else if (demo.role === "guest") setLocation("/demo/stay");
-                          else setLocation("/demo/host");
-                        }}
-                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${
-                          isCurrent
-                            ? "bg-amber-50/90 border-amber-400 shadow-sm"
-                            : "bg-white hover:bg-[#f6f9f5] border-[#dde3db] hover:border-amber-300"
-                        }`}
-                      >
-                        <div className="space-y-1 min-w-0 pr-3">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-xs text-[#16211c] truncate">
-                              {demo.displayName}
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase shrink-0 ${
-                                demo.role === "super_admin"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : demo.role === "host_admin"
-                                  ? "bg-amber-100 text-amber-800"
-                                  : demo.role === "staff"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : "bg-emerald-100 text-emerald-800"
-                              }`}
-                            >
-                              {demo.role.replace("_", " ")}
-                            </span>
-                          </div>
-                          <span className="text-[11px] text-stone-400 block truncate font-mono">
-                            {demo.email}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          {isCurrent ? (
-                            <span className="flex items-center gap-1 text-[11px] text-emerald-600 font-bold px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200">
-                              <CheckCircle2 size={13} /> Active
-                            </span>
-                          ) : (
-                            <span className="text-xs font-semibold text-stone-400 group-hover:text-amber-800 flex items-center gap-1 transition-colors">
-                              <span>Switch</span>
-                              <ArrowRight size={13} />
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
             )}
           </div>
 
