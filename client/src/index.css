@@ -109,7 +109,12 @@
 .hero-section:after { content: ''; pointer-events: none; position: absolute; inset: 0; opacity: .33; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E"); mix-blend-mode: multiply; }
 .hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, .92fr) minmax(390px, .9fr); gap: 7%; max-width: 1160px; margin: auto; align-items: center; }
 .hero-copy { padding-bottom: 38px; }
-.hero-lockup { display: block; width: 132px; height: 132px; margin-bottom: 8px; object-fit: contain; }
+.hero-lockup { display: none; }
+.home-layer-grid { grid-template-columns: repeat(2, 1fr); }
+.home-walk-photo { background: linear-gradient(145deg, #1d3025 0%, #3d5c4a 42%, #c9a06a 100%); }
+@media (max-width: 760px) {
+  .home-layer-grid { grid-template-columns: 1fr; }
+}
 .eyebrow-pill, .eyebrow { font: 500 10px 'DM Mono', monospace; letter-spacing: .13em; color: #718079; }
 .eyebrow-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid #dce3da; border-radius: 999px; background: #fffdf966; }
 .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: #eea25c; box-shadow: 0 0 0 4px #eea25c22; }
