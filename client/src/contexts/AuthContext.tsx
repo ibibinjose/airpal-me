@@ -3,6 +3,36 @@ import { UserProfile, UserRole, DEMO_USERS, PropertyInfo } from "@shared/airpal-
 import { loadAllProperties, saveProperty } from "../lib/airpal-backend";
 import { toast } from "sonner";
 import { nanoid } from "nanoid";
+import { isDemoMode } from "../lib/app-mode";
+
+export interface RegisterOptions {
+  kind?: "hotel" | "campus" | "guest";
+  city?: string;
+  wifiNetwork?: string;
+  wifiPassword?: string;
+  password?: string;
+}
+
+const ACCOUNTS_KEY = "airpal.accounts";
+
+interface StoredAccount {
+  email: string;
+  password: string;
+  user: UserProfile;
+}
+
+function readAccounts(): StoredAccount[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(window.localStorage.getItem(ACCOUNTS_KEY) || "[]") as StoredAccount[];
+  } catch {
+    return [];
+  }
+}
+
+function writeAccounts(rows: StoredAccount[]) {
+  window.localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(rows));
+}
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -10,7 +40,7 @@ interface AuthContextType {
   activePropertyId: string;
   setActivePropertyId: (id: string) => void;
   login: (email: string, password?: string) => Promise<boolean>;
-  register: (email: string, displayName: string, role: UserRole, propertyName?: string) => Promise<boolean>;
+  register: (email: string, displayName: string, role: UserRole, propertyName?: string, options?: RegisterOptions) => Promise<boolean>;
   logout: () => void;
   switchRole: (role: UserRole, propertyId?: string) => void;
   isSuperAdmin: boolean;
@@ -27,14 +57,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
-    if (typeof window === "undefined") return DEMO_USERS[1]; // default host admin
+    if (typeof window === "undefined") return isDemoMode() ? DEMO_USERS[1] : null;
     try {
       const stored = window.localStorage.getItem(LOCAL_AUTH_KEY);
-      if (stored) return JSON.parse(stored) as UserProfile;
+      if (stored) {
+        const parsed = JSON.parse(stored) as UserProfile;
+        if (!isDemoMode() && DEMO_USERS.some((row) => row.uid === parsed.uid)) return null;
+        return parsed;
+      }
     } catch {
       // ignore
     }
-    return DEMO_USERS[1]; // default host admin
+    return isDemoMode() ? DEMO_USERS[1] : null;
   });
 
   const [activePropertyId, setActivePropertyIdState] = useState<string>(() => {
@@ -71,29 +105,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     ? allProps
     : allProps.filter((p) => user?.propertyIds?.includes(p.id) || p.id === activePropertyId);
 
-  const login = async (email: string): Promise<boolean> => {
+  const login = async (email: string, password?: string): Promise<boolean> => {
     const trimmed = email.trim().toLowerCase();
     const demo = DEMO_USERS.find((u) => u.email.toLowerCase() === trimmed);
-    if (demo) {
+    if (demo && isDemoMode()) {
       setUser(demo);
       if (demo.propertyIds?.[0]) setActivePropertyId(demo.propertyIds[0]);
-      toast.success(`Welcome back, ${demo.displayName}!`, {
-        description: `Logged in as ${demo.role.replace("_", " ").toUpperCase()}`,
-      });
+      toast.success(`Welcome back, ${demo.displayName}!`);
       return true;
     }
 
-    // Dynamic user if not in demo list
-    const newUser: UserProfile = {
-      uid: `u-${nanoid(6)}`,
-      email: trimmed,
-      displayName: trimmed.split("@")[0].toUpperCase(),
-      role: trimmed.includes("admin") ? "super_admin" : "host_admin",
-      propertyIds: ["harbour-hotel"],
-      createdAt: new Date().toISOString(),
-    };
-    setUser(newUser);
-    toast.success(`Logged in as ${newUser.displayName}`);
+    const account = readAccounts().find((row) => row.email === trimmed);
+    if (!account) {
+      toast.error("No account for that email", { description: "Create a property first — it takes a minute." });
+      return false;
+    }
+    if (account.password && account.password !== (password || "")) {
+      toast.error("Wrong password");
+      return false;
+    }
+    setUser(account.user);
+    if (account.user.propertyIds?.[0]) setActivePropertyId(account.user.propertyIds[0]);
+    toast.success(`Welcome back, ${account.user.displayName}`);
     return true;
   };
 
@@ -102,41 +135,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     displayName: string,
     targetRole: UserRole = "host_admin",
     propertyName?: string,
+    options?: RegisterOptions,
   ): Promise<boolean> => {
-    let propId = "harbour-hotel";
+    const trimmedEmail = email.trim().toLowerCase();
+    if (readAccounts().some((row) => row.email === trimmedEmail)) {
+      toast.error("That email is already registered", { description: "Sign in instead." });
+      return false;
+    }
+
+    let propId = nanoid(8);
     if (propertyName && propertyName.trim()) {
-      propId = propertyName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      propId = propertyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || propId;
+      const city = options?.city?.trim() || "Your city";
       const newProp: PropertyInfo = {
         id: propId,
-        name: propertyName,
-        tagline: "Boutique Hospitality & Luxury Care",
-        destination: "Sydney",
-        city: "Sydney",
+        name: propertyName.trim(),
+        kind: options?.kind === "campus" ? "campus" : "hotel",
+        tagline: options?.kind === "campus" ? "Residential college companion" : "Your guest companion",
+        destination: city,
+        city,
         country: "Australia",
-        address: "Prime Central Avenue",
-        phone: "+61 2 9000 0000",
-        whatsapp: "+61 400 000 000",
-        roomsCount: 24,
-        status: "active",
-        ownerEmail: email,
-        monthlyRevenue: 12500,
+        address: city,
+        phone: "",
+        whatsapp: "",
+        roomsCount: 12,
+        status: "trial",
+        ownerEmail: trimmedEmail,
+        monthlyRevenue: 0,
         plan: "Starter",
         wifi: {
-          network: `${propertyName.replace(/\s+/g, "")}_Guest`,
-          password: "welcomeguest2026",
-          speed: "200 Mbps Fibre",
+          network: options?.wifiNetwork?.trim() || `${propertyName.replace(/\s+/g, "")}_Guest`,
+          password: options?.wifiPassword?.trim() || "changeme",
+          speed: "Wi-Fi",
         },
         checkIn: "2:00 PM",
         checkOut: "10:00 AM",
         breakfast: {
-          hours: "7:00 AM – 10:30 AM",
-          location: "Main Dining Room",
-          type: "Artisan Breakfast Buffet",
-          price: "$20",
+          hours: options?.kind === "campus" ? "7:00–9:30 · 12:00–14:00 · 17:30–19:30" : "7:00 AM – 10:30 AM",
+          location: options?.kind === "campus" ? "Dining hall" : "Main dining",
+          type: options?.kind === "campus" ? "Hall meals" : "Breakfast",
+          price: options?.kind === "campus" ? "Included" : "Ask host",
         },
         facilities: [
-          { name: "Guest Lounge", hours: "24 Hours", floor: "Lobby", details: "Coffee, tea, and workstations", icon: "Coffee" },
-          { name: "Luggage Storage", hours: "24 Hours", floor: "Front Desk", details: "Complimentary secure holding", icon: "Luggage" },
+          { name: "Help desk", hours: "24 Hours", floor: "Lobby", details: "Tap Staff in the companion", icon: "BellRing" },
         ],
       };
       await saveProperty(newProp);
@@ -144,24 +185,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const newUser: UserProfile = {
       uid: `u-${nanoid(6)}`,
-      email: email.trim(),
-      displayName: displayName.trim() || "Host Admin",
+      email: trimmedEmail,
+      displayName: displayName.trim() || "Host",
       role: targetRole,
       propertyIds: [propId],
       createdAt: new Date().toISOString(),
     };
 
+    writeAccounts([...readAccounts(), { email: trimmedEmail, password: options?.password || "", user: newUser }]);
     setUser(newUser);
     setActivePropertyId(propId);
-    toast.success("Account & Property Registered!", {
-      description: `Welcome to AirPal Business, ${newUser.displayName}`,
-    });
+    toast.success("Your AirPal is live", { description: "Print the QR. Guests scan it — they don’t sign up." });
     return true;
   };
 
   const logout = () => {
-    setUser(DEMO_USERS[3]); // switch to guest
-    toast.info("Logged out", { description: "You are now viewing as Guest" });
+    setUser(null);
+    toast.info("Signed out");
   };
 
   const switchRole = (newRole: UserRole, targetPropertyId?: string) => {

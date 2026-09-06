@@ -17,6 +17,7 @@ import {
 } from "../../../shared/airpal-data";
 import { toast } from "sonner";
 import { detectBrowserLanguage } from "../lib/platform";
+import { isDemoMode } from "../lib/app-mode";
 import {
   loadLocalTickets,
   persistLocalTickets,
@@ -105,9 +106,9 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [propertyId, setPropertyIdState] = useState<string>("harbour-hotel");
   const [property, setProperty] = useState<PropertyInfo>(() => loadProperty("harbour-hotel"));
   const [roomNumber, setRoomNumber] = useState<string>("508");
-  const [guestName, setGuestName] = useState<string>("Bibin");
+  const [guestName, setGuestName] = useState<string>(() => (isDemoMode() ? "Bibin" : "Guest"));
   const [qrType, setQrType] = useState<QrType>("room");
-  const [deviceMode, setDeviceMode] = useState<DeviceMode>("iphone");
+  const [deviceMode, setDeviceMode] = useState<DeviceMode>(() => (isDemoMode() ? "iphone" : "responsive"));
   const [language, setLanguage] = useState<string>(() => detectBrowserLanguage(SUPPORTED_LANGUAGES));
   const [familyMode, setFamilyMode] = useState<boolean>(false);
   const [seniorMode, setSeniorMode] = useState<boolean>(false);
@@ -345,7 +346,7 @@ export const AirPalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setSeniorMode,
         weather,
         setWeather,
-        staffTickets,
+        staffTickets: staffTickets.filter((ticket) => (ticket.propertyId || "harbour-hotel") === property.id),
         addStaffTicket,
         updateTicketStatus,
         cart,

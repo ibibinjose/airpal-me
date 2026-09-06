@@ -19,7 +19,6 @@ import {
   TrendingUp,
   Sparkles,
   Printer,
-  Download,
   Utensils,
   Wrench,
   Shirt,
@@ -45,10 +44,11 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { DealItem, MenuItem, PropertyInfo } from "@shared/airpal-data";
 import { nanoid } from "nanoid";
+import { makeQrDataUrl, stayQrPayload, campusQrPayload } from "../lib/qr";
 
 export const HostDashboard: React.FC = () => {
   const [, setLocation] = useLocation();
-  const { user, role, userProperties, isSuperAdmin } = useAuth();
+  const { user, role, userProperties, isSuperAdmin, activePropertyId, setActivePropertyId, logout } = useAuth();
   const {
     property,
     updateProperty,
@@ -73,8 +73,14 @@ export const HostDashboard: React.FC = () => {
   >("overview");
 
   const [ticketFilter, setTicketFilter] = useState<"all" | "pending" | "in_progress" | "resolved">("all");
-  const [qrRoomInput, setQrRoomInput] = useState<string>("508");
+  const [qrRoomInput, setQrRoomInput] = useState<string>(property.kind === "campus" ? "R12" : "101");
   const [qrTypeSelection, setQrTypeSelection] = useState<"room" | "lobby" | "restaurant" | "emergency">("room");
+  const [qrImage, setQrImage] = useState("");
+
+  useEffect(() => {
+    const id = activePropertyId || user?.propertyIds?.[0];
+    if (id && id !== property.id) setPropertyId(id);
+  }, [activePropertyId, user, property.id, setPropertyId]);
 
   // Compendium CMS form state
   const [compName, setCompName] = useState(property.name);
@@ -106,6 +112,18 @@ export const HostDashboard: React.FC = () => {
     setCompBreakfastLocation(property.breakfast.location);
     setCompBreakfastPrice(property.breakfast.price);
   }, [property]);
+
+  const guestQrUrl =
+    property.kind === "campus"
+      ? campusQrPayload(property.id, qrRoomInput || "R12")
+      : stayQrPayload(
+          property.id,
+          qrTypeSelection === "room" ? qrRoomInput : qrTypeSelection === "lobby" ? "lobby" : qrRoomInput,
+        );
+
+  useEffect(() => {
+    void makeQrDataUrl(guestQrUrl).then(setQrImage);
+  }, [guestQrUrl]);
 
   // Deal Modal state
   const [showDealModal, setShowDealModal] = useState(false);
@@ -227,7 +245,10 @@ export const HostDashboard: React.FC = () => {
             {userProperties.length > 1 && (
               <select
                 value={property.id}
-                onChange={(e) => setPropertyId(e.target.value)}
+                onChange={(e) => {
+                  setPropertyId(e.target.value);
+                  setActivePropertyId(e.target.value);
+                }}
                 className="w-full py-1.5 px-2 rounded-lg bg-[#f4f7f2] border border-[#dde3db] text-[11px] font-semibold text-[#16211c] outline-none"
               >
                 {userProperties.map((p) => (
@@ -298,11 +319,26 @@ export const HostDashboard: React.FC = () => {
           )}
 
           <button
-            onClick={() => setLocation(`/g/${property.id}`)}
+            onClick={() =>
+              setLocation(
+                property.kind === "campus"
+                  ? `/c/${property.id}?room=${qrRoomInput || "R12"}`
+                  : `/g/${property.id}?type=room&room=${qrRoomInput || "101"}`,
+              )
+            }
             className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white hover:bg-[#eef3ed] text-[#c57a32] font-semibold border border-amber-400/30 transition-all text-xs"
           >
             <ExternalLink size={13} />
-            <span>Open Guest Companion</span>
+            <span>Open as guest</span>
+          </button>
+          <button
+            onClick={() => {
+              logout();
+              setLocation("/");
+            }}
+            className="w-full py-2 text-[11px] text-[#7a877f] hover:text-[#16211c]"
+          >
+            Sign out
           </button>
         </div>
       </aside>
@@ -365,6 +401,21 @@ export const HostDashboard: React.FC = () => {
         {/* SECTION 1: OVERVIEW */}
         {activeSection === "overview" && (
           <div className="space-y-6 animate-in fade-in">
+            <div className="p-5 rounded-3xl bg-white border border-[#dde3db] flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex-1 space-y-1">
+                <p className="text-[10px] font-mono uppercase tracking-widest text-amber-600 font-bold">How guests get in</p>
+                <h3 className="font-bold text-base text-[#16211c]">They scan. They don’t sign up.</h3>
+                <p className="text-xs text-[#5a6b62] max-w-xl">
+                  Print the QR from the kit. Put it on the desk or gate. Guests open the companion with Wi-Fi, dining, and help — no app store, no account.
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveSection("qr-kit")}
+                className="shrink-0 px-4 py-2.5 rounded-xl bg-amber-400 text-stone-950 text-xs font-bold"
+              >
+                Open QR kit
+              </button>
+            </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#dde3db] space-y-1">
                 <span className="text-xs text-stone-400 flex items-center justify-between">
@@ -918,30 +969,35 @@ export const HostDashboard: React.FC = () => {
                 )}
 
                 <div className="p-3 rounded-xl bg-white border border-[#e8ece4] space-y-1 text-xs text-[#5a6b62]">
-                  <span className="block font-mono text-[10px] text-amber-600 uppercase">Target URL</span>
-                  <span className="font-mono text-xs text-[#16211c] break-all">
-                    https://airpal.me/g/{property.id}?type={qrTypeSelection}&room={qrRoomInput}
-                  </span>
+                  <span className="block font-mono text-[10px] text-amber-600 uppercase">Guest URL — print this QR</span>
+                  <span className="font-mono text-xs text-[#16211c] break-all">{guestQrUrl}</span>
                 </div>
 
-                <div className="pt-2 flex gap-2">
+                <div className="pt-2 flex flex-col gap-2">
                   <button
                     onClick={() => {
-                      toast.success("Print Template Ready", {
-                        description: `High-res PDF generated for Room ${qrRoomInput}.`,
-                      });
+                      void navigator.clipboard.writeText(guestQrUrl);
+                      toast.success("Guest link copied");
                     }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs transition-all shadow"
+                    className="w-full py-2.5 rounded-xl bg-[#f1f5f0] text-xs font-bold"
                   >
-                    <Download size={14} />
-                    <span>Download PDF Kit</span>
+                    Copy guest link
                   </button>
-                  <button
-                    onClick={() => window.print()}
-                    className="p-2.5 rounded-xl bg-[#f1f5f0] hover:bg-[#e7eee8] text-[#3a4a42] border border-[#dde3db] transition-all"
-                  >
-                    <Printer size={15} />
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => window.open(guestQrUrl, "_blank")}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs transition-all shadow"
+                    >
+                      <ExternalLink size={14} />
+                      <span>Open as guest</span>
+                    </button>
+                    <button
+                      onClick={() => window.print()}
+                      className="p-2.5 rounded-xl bg-[#f1f5f0] hover:bg-[#e7eee8] text-[#3a4a42] border border-[#dde3db] transition-all"
+                    >
+                      <Printer size={15} />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -957,8 +1013,12 @@ export const HostDashboard: React.FC = () => {
                     <span>AirPal<span className="text-[#0050d8]">.me</span></span>
                   </div>
 
-                  <div className="w-36 h-36 border-4 border-stone-950 rounded-2xl p-2.5 flex items-center justify-center bg-white shadow-inner">
-                    <QrCode size={110} strokeWidth={1.5} className="text-stone-950" />
+                  <div className="w-36 h-36 border-4 border-stone-950 rounded-2xl p-2.5 flex items-center justify-center bg-white shadow-inner overflow-hidden">
+                    {qrImage ? (
+                      <img src={qrImage} alt="Guest QR" className="w-full h-full object-contain" />
+                    ) : (
+                      <QrCode size={110} strokeWidth={1.5} className="text-stone-950" />
+                    )}
                   </div>
 
                   <div className="space-y-1">

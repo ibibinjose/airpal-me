@@ -14,13 +14,15 @@ import {
   User,
   Hotel,
 } from "lucide-react";
-import { DEMO_USERS, UserRole } from "@shared/airpal-data";
+import { DEMO_USERS } from "@shared/airpal-data";
+import { isDemoMode } from "../lib/app-mode";
 
 export const AuthPage: React.FC = () => {
   const { login, register, switchRole, role, user } = useAuth();
   const [, setLocation] = useLocation();
 
-  const [tab, setTab] = useState<"login" | "register" | "roles">("login");
+  const demo = isDemoMode();
+  const [tab, setTab] = useState<"login" | "register" | "roles">(demo ? "roles" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -31,8 +33,9 @@ export const AuthPage: React.FC = () => {
     e.preventDefault();
     if (!email) return;
     setLoading(true);
-    await login(email, password);
+    const ok = await login(email, password);
     setLoading(false);
+    if (!ok) return;
     if (email.includes("admin")) {
       setLocation("/admin");
     } else {
@@ -42,11 +45,11 @@ export const AuthPage: React.FC = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !name) return;
+    if (!email || !name || !propertyName || !password) return;
     setLoading(true);
-    await register(email, name, "host_admin", propertyName);
+    const ok = await register(email, name, "host_admin", propertyName, { password });
     setLoading(false);
-    setLocation("/host");
+    if (ok) setLocation("/host");
   };
 
   return (
@@ -63,13 +66,13 @@ export const AuthPage: React.FC = () => {
             Hospitality Operating System
           </h1>
           <p className="text-xs text-[#5a6b62] max-w-sm mx-auto">
-            Log in to manage your property compendium, live staff requests, deals, and dining orders.
+            Hosts sign in here. Guests never create an account — they scan the QR on the desk.
           </p>
         </div>
 
         {/* Auth Mode Tabs */}
         <div className="bg-white rounded-3xl border border-[#dde3db] shadow-xl overflow-hidden">
-          <div className="grid grid-cols-3 border-b border-[#dde3db] text-xs font-bold text-center">
+          <div className={`grid ${demo ? "grid-cols-3" : "grid-cols-2"} border-b border-[#dde3db] text-xs font-bold text-center`}>
             <button
               onClick={() => setTab("login")}
               className={`py-3.5 transition-all ${
@@ -90,16 +93,18 @@ export const AuthPage: React.FC = () => {
             >
               Register Hotel
             </button>
-            <button
-              onClick={() => setTab("roles")}
-              className={`py-3.5 transition-all ${
-                tab === "roles"
-                  ? "border-b-2 border-amber-500 text-stone-900 bg-amber-50/40"
-                  : "text-stone-500 hover:text-stone-800"
-              }`}
-            >
-              1-Click Demo Roles
-            </button>
+            {demo && (
+              <button
+                onClick={() => setTab("roles")}
+                className={`py-3.5 transition-all ${
+                  tab === "roles"
+                    ? "border-b-2 border-amber-500 text-stone-900 bg-amber-50/40"
+                    : "text-stone-500 hover:text-stone-800"
+                }`}
+              >
+                Demo roles
+              </button>
+            )}
           </div>
 
           <div className="p-6 sm:p-8">
@@ -146,13 +151,9 @@ export const AuthPage: React.FC = () => {
 
                 <div className="pt-2 text-center">
                   <span className="text-[11px] text-stone-400">
-                    Need instant access? Switch to the{" "}
-                    <button
-                      type="button"
-                      onClick={() => setTab("roles")}
-                      className="text-amber-700 font-bold hover:underline"
-                    >
-                      1-Click Demo Roles
+                    New property?{" "}
+                    <button type="button" onClick={() => setLocation("/start")} className="text-amber-700 font-bold hover:underline">
+                      Start here
                     </button>
                   </span>
                 </div>
@@ -207,14 +208,36 @@ export const AuthPage: React.FC = () => {
                   </div>
                 </div>
 
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-[#3a4a42]">Password</label>
+                  <div className="relative">
+                    <Lock size={15} className="absolute left-3 top-3 text-stone-400" />
+                    <input
+                      type="password"
+                      required
+                      minLength={6}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="At least 6 characters"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#f8faf7] border border-[#dde3db] text-xs outline-none focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   disabled={loading}
                   className="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 font-bold text-xs text-stone-950 transition-all shadow flex items-center justify-center gap-2"
                 >
-                  <span>Onboard My Property</span>
+                  <span>Create property & QR</span>
                   <ArrowRight size={14} />
                 </button>
+                <p className="text-[11px] text-stone-400 text-center">
+                  Prefer the guided setup?{" "}
+                  <button type="button" onClick={() => setLocation("/start")} className="text-amber-700 font-bold hover:underline">
+                    Start here
+                  </button>
+                </p>
               </form>
             )}
 

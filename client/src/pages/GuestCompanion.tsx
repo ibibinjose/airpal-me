@@ -37,6 +37,7 @@ import { StaffRequestModal } from "../components/companion/StaffRequestModal";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { HOTEL_EVENTS, TRANSPORT_OPTIONS } from "../../../shared/airpal-data";
+import { isSeededProperty } from "../lib/airpal-backend";
 import { DeviceStage } from "../components/os/DeviceStage";
 
 export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) => {
@@ -53,13 +54,15 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
     t,
     places,
     experiences,
-    upsells,
     activeUpsells,
     purchaseUpsell,
     savedPlaces,
     toggleSavePlace,
     trackEvent,
+    upsells,
   } = useAirPal();
+  const seededStay = isSeededProperty(property.id);
+  const stayOffer = upsells.find((item) => item.category === "stay") || upsells[0];
 
   const [activeTab, setActiveTab] = useState<"stay" | "discover" | "experiences" | "services">("stay");
   const [wifiModalOpen, setWifiModalOpen] = useState(false);
@@ -109,7 +112,9 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
       <div className="guest-scroll flex-1 px-5 pt-5 pb-16 space-y-5">
         <section>
           <div className="flex items-center justify-between gap-2">
-            <p className="ap-kicker">{t("welcome")}, {guestName}</p>
+            <p className="ap-kicker">
+              {guestName && guestName !== "Guest" ? `${t("welcome")}, ${guestName}` : t("welcome")}
+            </p>
             <span className="flex items-center gap-1 text-[11px] text-[#7a877f]">
               {weather === "rainy" ? <CloudRain size={12} className="text-[#1d6aa5]" /> : <Sun size={12} className="text-[#c57a32]" />}
               {weather === "rainy" ? "18°" : "24°"} · {scanLabel}
@@ -154,7 +159,9 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
             </div>
           </div>
           <p className="text-xs text-[#5a6b62] mt-2 mb-4 leading-relaxed">
-            Three walks from the door, matched to time and weather.
+            {seededStay
+              ? "Three walks from the door, matched to time and weather."
+              : "Ask AirPal, open Wi-Fi, or request staff — this stay is live from the QR."}
           </p>
           <button
             onClick={() => {
@@ -214,7 +221,7 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
               <div className="flex items-center justify-between pb-2.5 border-b border-[#e8ece4]">
                 <div className="flex items-center gap-2">
                   <Coffee size={16} className="text-[#c57a32]" />
-                  <strong className="text-sm text-[#16211c]">Artisan Breakfast</strong>
+                  <strong className="text-sm text-[#16211c]">{property.breakfast.type || "Breakfast"}</strong>
                 </div>
                 <span className="text-xs font-mono text-[#c57a32]">{property.breakfast.hours}</span>
               </div>
@@ -223,29 +230,33 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
               </p>
               <div className="flex items-center justify-between text-xs pt-1">
                 <span className="text-[#7a877f]">{property.breakfast.price}</span>
+                {seededStay && (
                 <button
                   onClick={() => purchaseUpsell("up_breakfast")}
                   className="px-3 py-1.5 rounded-xl bg-[#f8e4c8] hover:bg-amber-400 text-[#c57a32] hover:text-[#24180d] font-semibold text-xs transition-all"
                 >
                   Pre-Book ($22)
                 </button>
+                )}
               </div>
             </div>
 
+            {stayOffer && (
             <div className="rounded-2xl bg-gradient-to-r from-[#fff4e4] to-[#eef6f0] border border-[#f0d4a8] p-4 flex items-center justify-between gap-3">
               <div className="space-y-0.5">
-                <span className="text-[10px] font-mono uppercase text-[#c57a32] font-bold">Flight later today?</span>
-                <h4 className="text-sm font-bold text-[#16211c]">Keep Room {roomNumber} until 4 PM</h4>
-                <span className="text-xs text-[#5a6b62]">Special guest rate: $45 AUD</span>
+                <span className="text-[10px] font-mono uppercase text-[#c57a32] font-bold">{stayOffer.badge}</span>
+                <h4 className="text-sm font-bold text-[#16211c]">{stayOffer.title}</h4>
+                <span className="text-xs text-[#5a6b62]">{stayOffer.subtitle}</span>
               </div>
               <button
-                onClick={() => purchaseUpsell("up_late_checkout")}
-                disabled={activeUpsells.includes("up_late_checkout")}
+                onClick={() => purchaseUpsell(stayOffer.id)}
+                disabled={activeUpsells.includes(stayOffer.id)}
                 className="px-4 py-2 rounded-xl bg-[#18271f] hover:bg-[#284236] active:scale-95 disabled:opacity-60 text-[#fffdf8] font-bold text-xs whitespace-nowrap transition-all"
               >
-                {activeUpsells.includes("up_late_checkout") ? "Added to Room" : "Add for $45"}
+                {activeUpsells.includes(stayOffer.id) ? "Added to Room" : `Add for $${stayOffer.price}`}
               </button>
             </div>
+            )}
 
             <div>
               <h3 className="text-xs font-semibold text-[#7a877f] uppercase tracking-wider mb-2.5">Hotel Facilities & Hours</h3>
@@ -272,6 +283,7 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
               </div>
             </div>
 
+            {seededStay && (
             <div>
               <h3 className="text-xs font-semibold text-[#7a877f] uppercase tracking-wider mb-2.5">Getting around</h3>
               <div className="space-y-2">
@@ -296,6 +308,7 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
                 ))}
               </div>
             </div>
+            )}
           </section>
         )}
 
@@ -324,7 +337,9 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
             <div className="space-y-3">
               {filteredPlaces.length === 0 && (
                 <div className="rounded-2xl bg-white border border-[#dde3db] p-4 text-xs text-[#5a6b62]">
-                  No places in this category right now. Try another filter or turn off Family mode.
+                  {places.length === 0
+                    ? "No local places yet. The host can add them from the dashboard."
+                    : "No places in this category right now. Try another filter or turn off Family mode."}
                 </div>
               )}
               {filteredPlaces.map((place) => {
@@ -389,6 +404,7 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
 
         {activeTab === "experiences" && (
           <section className="space-y-4 animate-in fade-in">
+            {seededStay && (
             <button
               onClick={() => setLocation("/tour/rocks-harbour")}
               className="w-full text-left rounded-[1.35rem] bg-gradient-to-br from-[#18271f] to-[#2a4036] text-[#fffdf8] p-4"
@@ -398,15 +414,24 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
               <p className="text-xs text-white/75 mt-1">90 min · 2.4 km · map, voice, and a share link like FreeGuides.</p>
               <span className="inline-flex items-center gap-1 mt-3 text-xs font-semibold">Start the walk <ArrowRight size={14} /></span>
             </button>
+            )}
+            {seededStay && (
             <button onClick={() => setLocation("/u/harbour-hotel")} className="w-full text-left ap-card p-3.5 text-xs">
               <span className="ap-kicker">Hotel profile</span>
               <strong className="block mt-0.5">Harbour Hotel on AirPal</strong>
               <span className="text-[11px] text-[#7a877f]">All walks from this stay · shareable QR</span>
             </button>
+            )}
             <div className="rounded-2xl bg-gradient-to-r from-[#fff4e4] via-[#eef6f0] to-transparent border border-[#dde3db] p-4 space-y-1">
-              <h3 className="font-bold text-sm text-[#16211c]">Curated Sydney Experiences</h3>
-              <p className="text-xs text-[#5a6b62]">Direct booking with hotel concierge partner rates and guaranteed availability.</p>
+              <h3 className="font-bold text-sm text-[#16211c]">{seededStay ? "Curated Sydney Experiences" : "Experiences from this stay"}</h3>
+              <p className="text-xs text-[#5a6b62]">
+                {seededStay
+                  ? "Direct booking with hotel concierge partner rates and guaranteed availability."
+                  : "Add walks and offers in the host dashboard. Guests see them here after they scan."}
+              </p>
             </div>
+            {seededStay && (
+            <>
             <div className="space-y-2">
               {HOTEL_EVENTS.map((event) => (
                 <div key={event.id} className="p-3.5 rounded-2xl bg-white border border-[#dde3db] flex items-center gap-3">
@@ -453,6 +478,8 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
                 </article>
               ))}
             </div>
+            </>
+            )}
             <div className="pt-2">
               <h4 className="text-xs font-semibold text-[#7a877f] uppercase tracking-wider mb-2.5">Hotel Add-Ons & Folio Upgrades</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">

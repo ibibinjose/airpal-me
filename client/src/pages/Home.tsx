@@ -17,31 +17,32 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { isDemoMode } from "../lib/app-mode";
 
 const layers = [
   {
-    path: "/stay",
+    path: "/demo/stay",
     kicker: "01 · Stay",
     title: "Hotel companion",
     text: "One room QR. Wi-Fi, dining, help, and what to do now — without another app.",
     tone: "peach",
   },
   {
-    path: "/campus",
+    path: "/demo/campus",
     kicker: "02 · Campus",
     title: "College companion",
     text: "Timetable, Great Hall, night escort, and the city after class.",
     tone: "aqua",
   },
   {
-    path: "/tour/rocks-harbour",
+    path: "/demo/tour/rocks-harbour",
     kicker: "03 · Walk",
     title: "Self-guided tours",
     text: "Map, voice at each stop, shareable link. The FreeGuides idea, from your door.",
     tone: "lilac",
   },
   {
-    path: "/os",
+    path: "/demo",
     kicker: "04 · OS",
     title: "Traveller operating system",
     text: "Trips with family, mates, and colleagues. Calendar sync. One timeline.",
@@ -180,7 +181,7 @@ export default function Home() {
   };
 
   return (
-    <main className="site-shell has-app-chrome">
+    <main className={`site-shell ${isDemoMode() ? "has-app-chrome" : ""}`}>
       <nav className="nav-wrap">
         <button className="brand" onClick={() => scrollTo("top")}>
           <span className="brand-mark">
@@ -194,9 +195,9 @@ export default function Home() {
           <button onClick={() => scrollTo("product")}>Product</button>
           <button onClick={() => scrollTo("walks")}>Walks</button>
           <button onClick={() => scrollTo("hosts")}>For hosts</button>
-          <button onClick={() => setLocation("/host")}>Host dashboard</button>
-          <button className="nav-cta" onClick={() => setLocation("/os")}>
-            Open the OS <ArrowRight size={15} />
+          <button onClick={() => setLocation("/auth")}>Sign in</button>
+          <button className="nav-cta" onClick={() => setLocation("/start")}>
+            Start free <ArrowRight size={15} />
           </button>
         </div>
         <button className="mobile-toggle" onClick={() => setMobileOpen((v) => !v)} aria-label="Toggle menu">
@@ -219,17 +220,14 @@ export default function Home() {
               One QR for the hotel or the college. Then walks, calendar, and the people you travel with — not another search engine.
             </p>
             <div className="hero-actions">
-              <button className="button-primary" onClick={() => setLocation("/os")}>
-                Open the travel OS <ArrowRight size={17} />
+              <button className="button-primary" onClick={() => setLocation("/start")}>
+                Create your property <ArrowRight size={17} />
               </button>
-              <button className="button-quiet" onClick={() => setLocation("/stay")}>
-                Hotel
+              <button className="button-quiet" onClick={() => setLocation("/scan")}>
+                I have a QR
               </button>
-              <button className="button-quiet" onClick={() => setLocation("/campus")}>
-                Campus
-              </button>
-              <button className="button-quiet" onClick={() => setLocation("/tour/rocks-harbour")}>
-                Walk
+              <button className="button-quiet" onClick={() => setLocation("/demo")}>
+                Try the demo
               </button>
             </div>
             <div className="hero-proof">
@@ -271,6 +269,45 @@ export default function Home() {
         </div>
       </section>
 
+      <section id="how" className="platform-section section-pad">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">HOW IT WORKS</span>
+            <h2>
+              Hosts sign up.
+              <br />
+              <em>Guests only scan.</em>
+            </h2>
+          </div>
+          <p>AirPal is not an account for every traveller. The host creates the stay. The QR on the desk is the guest’s login.</p>
+        </div>
+        <div className="feature-grid">
+          <button className="feature-card peach" onClick={() => setLocation("/start")}>
+            <div className="feature-top"><span className="feature-number">01</span></div>
+            <h3>Host creates a property</h3>
+            <p>Hotel or college. Name, city, Wi-Fi. That’s the only account AirPal needs.</p>
+          </button>
+          <button className="feature-card aqua" onClick={() => setLocation("/start")}>
+            <div className="feature-top"><span className="feature-number">02</span></div>
+            <h3>Print the QR</h3>
+            <p>Room, lobby, or college gate. Edit Wi-Fi and menus later — the printed code stays the same.</p>
+          </button>
+          <button className="feature-card lilac" onClick={() => setLocation("/scan")}>
+            <div className="feature-top"><span className="feature-number">03</span></div>
+            <h3>Guest scans</h3>
+            <p>No signup. Camera on the desk QR, or paste the guest link. That’s the whole login.</p>
+          </button>
+        </div>
+        <div className="hero-actions" style={{ marginTop: 22 }}>
+          <button className="button-primary" onClick={() => setLocation("/start")}>
+            I’m a host <ArrowRight size={16} />
+          </button>
+          <button className="button-quiet" onClick={() => setLocation("/scan")}>
+            I have a QR
+          </button>
+        </div>
+      </section>
+
       <section id="product" className="platform-section section-pad">
         <div className="section-heading">
           <div>
@@ -292,7 +329,7 @@ export default function Home() {
               <h3>{layer.title}</h3>
               <p>{layer.text}</p>
               <span className="feature-link">
-                Open <ArrowRight size={15} />
+                Open sample <ArrowRight size={15} />
               </span>
             </button>
           ))}
@@ -428,8 +465,8 @@ export default function Home() {
                 ))}
               </div>
             </div>
-            <button className="text-button" style={{ marginTop: 18 }} onClick={() => setLocation("/host")}>
-              Open host dashboard <ArrowRight size={15} />
+            <button className="text-button" style={{ marginTop: 18 }} onClick={() => setLocation("/start")}>
+              Create your property <ArrowRight size={15} />
             </button>
           </div>
         </div>
@@ -443,10 +480,15 @@ export default function Home() {
             <br />
             <em>the walk from the door.</em>
           </h2>
-          <p>No download. No marketplace. The companion for this stay, this campus, these people.</p>
-          <button className="button-primary light" onClick={() => setLocation("/os")}>
-            Open AirPal <ArrowRight size={17} />
-          </button>
+          <p>Hosts sign up. Guests only scan. The Harbour Hotel sample lives on the demo.</p>
+          <div className="hero-actions" style={{ justifyContent: "center" }}>
+            <button className="button-primary light" onClick={() => setLocation("/start")}>
+              Create your property <ArrowRight size={17} />
+            </button>
+            <button className="button-quiet" onClick={() => setLocation("/demo")}>
+              Try the demo
+            </button>
+          </div>
           <div className="final-note">
             <GraduationCap size={14} /> Travel smarter together
           </div>
@@ -470,9 +512,9 @@ export default function Home() {
         <div className="footer-links">
           <div>
             <b>Product</b>
-            <button onClick={() => setLocation("/os")}>Travel OS</button>
-            <button onClick={() => setLocation("/stay")}>Hotel</button>
-            <button onClick={() => setLocation("/campus")}>Campus</button>
+            <button onClick={() => setLocation("/start")}>Create a property</button>
+            <button onClick={() => setLocation("/scan")}>Scan a QR</button>
+            <button onClick={() => setLocation("/demo")}>Open demo</button>
             <button onClick={() => setLocation("/tour/rocks-harbour")}>Walks</button>
           </div>
           <div>
@@ -483,8 +525,9 @@ export default function Home() {
           </div>
           <div>
             <b>Hosts</b>
-            <button onClick={() => setLocation("/host")}>Dashboard</button>
+            <button onClick={() => setLocation("/start")}>Start free</button>
             <button onClick={() => setLocation("/auth")}>Sign in</button>
+            <button onClick={() => setLocation("/host")}>Dashboard</button>
           </div>
         </div>
         <div className="footer-bottom">

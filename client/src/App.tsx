@@ -18,6 +18,11 @@ import { WalkingTourPage } from "./pages/WalkingTour";
 import { GuideProfilePage } from "./pages/GuideProfile";
 import { TravelOsProvider } from "./contexts/TravelOsContext";
 import { isNativeShell } from "./lib/platform";
+import { enterDemo, isDemoMode, leaveDemo } from "./lib/app-mode";
+import { DEMO_USERS } from "@shared/airpal-data";
+import StartPage from "./pages/StartPage";
+import ScanPage from "./pages/ScanPage";
+import { useAuth } from "./contexts/AuthContext";
 
 function parseQrType(value: string | null): QrType | null {
   if (value === "room" || value === "property" || value === "dining" || value === "experience" || value === "emergency") {
@@ -39,7 +44,7 @@ function GuestRoute({ params }: { params?: { propertyId?: string } }) {
     const frame = searchParams.get("frame");
     if (qr) setQrType(qr);
     if (room) setRoomNumber(room);
-    if (isNativeShell()) {
+    if (isNativeShell() || !isDemoMode()) {
       setDeviceMode("responsive");
     } else if (frame === "iphone" || frame === "android" || frame === "tablet" || frame === "responsive") {
       setDeviceMode(frame);
@@ -49,30 +54,67 @@ function GuestRoute({ params }: { params?: { propertyId?: string } }) {
   return <GuestCompanion />;
 }
 
-function CampusRoute() {
-  const { setQrType, setRoomNumber, setDeviceMode } = useAirPal();
+function CampusRoute({ params }: { params?: { campusId?: string } }) {
+  const { setQrType, setRoomNumber, setDeviceMode, setPropertyId } = useAirPal();
 
   useEffect(() => {
+    if (params?.campusId) setPropertyId(params.campusId);
     const searchParams = new URLSearchParams(window.location.search);
     const qr = parseQrType(searchParams.get("type"));
     const room = searchParams.get("room");
     const frame = searchParams.get("frame");
     if (qr) setQrType(qr);
     setRoomNumber(room || "R12");
-    if (isNativeShell()) {
+    if (isNativeShell() || !isDemoMode()) {
       setDeviceMode("responsive");
     } else if (frame === "iphone" || frame === "android" || frame === "tablet" || frame === "responsive") {
       setDeviceMode(frame);
     }
-  }, [setQrType, setRoomNumber, setDeviceMode]);
+  }, [params?.campusId, setPropertyId, setQrType, setRoomNumber, setDeviceMode]);
 
   return <CampusCompanion />;
+}
+
+function DemoGate() {
+  const [location, setLocation] = useLocation();
+  const { user, switchRole } = useAuth();
+  const { setPropertyId } = useAirPal();
+  useEffect(() => {
+    if (location === "/demo" || location.startsWith("/demo/")) {
+      enterDemo();
+      setPropertyId("harbour-hotel");
+      if (!user) switchRole("host_admin");
+      const rest = location.replace(/^\/demo/, "") || "/os";
+      setLocation(rest);
+    }
+  }, [location, setLocation, user, switchRole, setPropertyId]);
+  return null;
+}
+
+function HostGate() {
+  const [location, setLocation] = useLocation();
+  const { user } = useAuth();
+  useEffect(() => {
+    if (location.startsWith("/host") && !user && !isDemoMode()) setLocation("/start");
+  }, [location, user, setLocation]);
+  return null;
+}
+
+function LiveAuthGuard() {
+  const { user, logout } = useAuth();
+  useEffect(() => {
+    if (!isDemoMode() && user && DEMO_USERS.some((row) => row.uid === user.uid)) {
+      logout();
+    }
+  }, [user, logout]);
+  return null;
 }
 
 function MainApp() {
   const [location, setLocation] = useLocation();
   const native = isNativeShell();
-  const showChrome = !native && !location.startsWith("/trip");
+  const demo = isDemoMode() || location.startsWith("/demo");
+  const showChrome = demo && !native && !location.startsWith("/trip");
 
   const activeView = location.startsWith("/admin")
     ? "admin"
@@ -93,8 +135,8 @@ function MainApp() {
     : "landing";
 
   useEffect(() => {
-    if (native && location === "/") setLocation("/os");
-  }, [native, location, setLocation]);
+    if (native && location === "/") setLocation(demo ? "/os" : "/scan");
+  }, [native, location, setLocation, demo]);
 
   const lockViewport =
     activeView === "companion" ||
@@ -106,6 +148,9 @@ function MainApp() {
 
   return (
     <div className={`flex flex-col bg-[#f9f8f4] text-[#16211c] font-sans antialiased ${lockViewport ? "h-dvh overflow-hidden" : "min-h-dvh"}`}>
+      <DemoGate />
+      <HostGate />
+      <LiveAuthGuard />
       {showChrome && (
         <DeviceFrameSwitcher
           activeView={activeView}
@@ -116,7 +161,10 @@ function MainApp() {
             else if (view === "dashboard") setLocation("/host");
             else if (view === "admin") setLocation("/admin");
             else if (view === "auth") setLocation("/auth");
-            else setLocation("/");
+            else {
+              leaveDemo();
+              setLocation("/");
+            }
           }}
         />
       )}
@@ -124,6 +172,9 @@ function MainApp() {
         <Switch>
           <Route path="/admin" component={SuperAdminDashboard} />
           <Route path="/auth" component={AuthPage} />
+          <Route path="/start" component={StartPage} />
+          <Route path="/scan" component={ScanPage} />
+          <Route path="/demo" component={TravelOs} />
           <Route path="/host" component={HostDashboard} />
           <Route path="/os" component={TravelOs} />
           <Route path="/stay" component={GuestRoute} />

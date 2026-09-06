@@ -55,7 +55,12 @@ const KIND_TONE: Record<string, string> = {
 
 export const CampusCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) => {
   const [, setLocation] = useLocation();
-  const { deviceMode, weather, seniorMode, qrType, roomNumber, guestName } = useAirPal();
+  const { deviceMode, weather, seniorMode, qrType, roomNumber, guestName, property } = useAirPal();
+  const liveCampus = property.kind === "campus";
+  const campusName = liveCampus ? property.name : HARBOUR_COLLEGE.name;
+  const campusTag = liveCampus ? property.tagline : HARBOUR_COLLEGE.university;
+  const campusWifi = liveCampus ? property.wifi : HARBOUR_COLLEGE.wifi;
+  const campusId = liveCampus ? property.id : HARBOUR_COLLEGE.id;
   const [tab, setTab] = useState<Tab>("today");
   const [wifiOpen, setWifiOpen] = useState(false);
   const [diningOpen, setDiningOpen] = useState(false);
@@ -105,7 +110,7 @@ export const CampusCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) 
     g.events.filter((e) => e.date >= today && e.date <= "2026-09-20").map((e) => ({ ...e, group: g.name })),
   );
   const filteredPlaces = CAMPUS_PLACES.filter((p) => placeCategory === "All" || p.category === placeCategory);
-  const payload = campusQrPayload(HARBOUR_COLLEGE.id, room);
+  const payload = campusQrPayload(campusId, room);
 
   useEffect(() => {
     void makeQrDataUrl(payload).then(setQrSrc);
@@ -161,8 +166,8 @@ export const CampusCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) 
                   {weather === "rainy" ? "18°" : "24°"} · {room}
                 </span>
               </div>
-              <h1 className={`ap-display leading-[1.05] mt-1 ${seniorMode ? "text-[34px]" : "text-[28px]"}`}>{HARBOUR_COLLEGE.name}</h1>
-              <p className="text-xs text-[#7a877f] mt-1">{HARBOUR_COLLEGE.university}</p>
+              <h1 className={`ap-display leading-[1.05] mt-1 ${seniorMode ? "text-[34px]" : "text-[28px]"}`}>{campusName}</h1>
+              <p className="text-xs text-[#7a877f] mt-1">{campusTag}</p>
             </section>
 
             <section className="grid grid-cols-4 gap-2">
@@ -419,19 +424,19 @@ export const CampusCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) 
           </div>
           <div className="rounded-2xl bg-white border border-[#dde3db] p-3.5 mb-2">
             <span className="block text-[11px] text-stone-400">Network</span>
-            <strong className="font-mono text-sm">{HARBOUR_COLLEGE.wifi.network}</strong>
+            <strong className="font-mono text-sm">{campusWifi.network}</strong>
           </div>
           <div className="rounded-2xl bg-white border border-[#dde3db] p-3.5 flex items-center justify-between">
             <div>
               <span className="block text-[11px] text-stone-400">Login</span>
-              <strong className="text-sm">{HARBOUR_COLLEGE.wifi.password}</strong>
+              <strong className="text-sm">{campusWifi.password}</strong>
             </div>
             <button onClick={copyWifi} className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-400 text-stone-950 text-xs font-semibold">
               {copied ? <Check size={14} /> : <Copy size={14} />}
               {copied ? "Copied" : "Copy"}
             </button>
           </div>
-          <p className="mt-3 text-[11px] text-[#5a6b62]">{HARBOUR_COLLEGE.wifi.speed}. Visitors ask reception for a 24h guest token.</p>
+          <p className="mt-3 text-[11px] text-[#5a6b62]">{campusWifi.speed}. Visitors ask reception for a 24h guest token.</p>
         </div>
       </CompanionSheet>
 

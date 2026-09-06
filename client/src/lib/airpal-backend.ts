@@ -258,11 +258,31 @@ export async function saveProperty(property: PropertyInfo): Promise<PropertyInfo
 
 // ---------------- Deals & Upsells CRUD ---------------- //
 
+const SEEDED_PROPERTY_IDS = new Set(ALL_PROPERTIES.map((p) => p.id));
+
+export function isSeededProperty(propertyId: string) {
+  return SEEDED_PROPERTY_IDS.has(propertyId);
+}
+
 export function loadPropertyDeals(propertyId: string): DealItem[] {
   const key = `${LOCAL_DEALS_PREFIX}${propertyId}`;
   const stored = readLocal<DealItem[]>(key, []);
   if (stored.length > 0) return stored;
-  return DEFAULT_DEALS.map((d) => ({ ...d, propertyId }));
+  if (SEEDED_PROPERTY_IDS.has(propertyId)) return DEFAULT_DEALS.map((d) => ({ ...d, propertyId }));
+  return [
+    {
+      id: "starter-late-checkout",
+      propertyId,
+      title: "Late checkout",
+      subtitle: "Stay until 1 PM — edit this in the host dashboard",
+      price: 25,
+      originalPrice: 40,
+      badge: "Stay",
+      iconName: "Clock",
+      category: "stay",
+      active: true,
+    },
+  ];
 }
 
 export async function savePropertyDeal(propertyId: string, deal: DealItem): Promise<DealItem> {
@@ -298,7 +318,8 @@ export function loadPropertyMenu(propertyId: string): MenuItem[] {
   const key = `${LOCAL_MENU_PREFIX}${propertyId}`;
   const stored = readLocal<MenuItem[]>(key, []);
   if (stored.length > 0) return stored;
-  return IN_ROOM_DINING_MENU.map((item) => ({ ...item, propertyId }));
+  if (SEEDED_PROPERTY_IDS.has(propertyId)) return IN_ROOM_DINING_MENU.map((item) => ({ ...item, propertyId }));
+  return IN_ROOM_DINING_MENU.slice(0, 4).map((item) => ({ ...item, propertyId }));
 }
 
 export async function savePropertyMenuItem(propertyId: string, item: MenuItem): Promise<MenuItem> {
@@ -334,7 +355,8 @@ export function loadPropertyPlaces(propertyId: string): LocalPlace[] {
   const key = `${LOCAL_PLACES_PREFIX}${propertyId}`;
   const stored = readLocal<LocalPlace[]>(key, []);
   if (stored.length > 0) return stored;
-  return LOCAL_PLACES.map((p) => ({ ...p, propertyId }));
+  if (SEEDED_PROPERTY_IDS.has(propertyId)) return LOCAL_PLACES.map((p) => ({ ...p, propertyId }));
+  return [];
 }
 
 export async function savePropertyPlace(propertyId: string, place: LocalPlace): Promise<LocalPlace> {

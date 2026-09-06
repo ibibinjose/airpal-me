@@ -2,6 +2,7 @@ export interface PropertyInfo {
   id: string;
   name: string;
   tagline: string;
+  kind?: "hotel" | "campus";
   destination: string;
   city: string;
   country: string;
