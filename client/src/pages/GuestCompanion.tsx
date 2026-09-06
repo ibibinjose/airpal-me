@@ -35,10 +35,12 @@ import { InRoomDiningModal } from "../components/companion/InRoomDiningModal";
 import { SafetyModal } from "../components/companion/SafetyModal";
 import { StaffRequestModal } from "../components/companion/StaffRequestModal";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 import { HOTEL_EVENTS, TRANSPORT_OPTIONS } from "../../../shared/airpal-data";
 import { DeviceStage } from "../components/os/DeviceStage";
 
 export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) => {
+  const [, setLocation] = useLocation();
   const {
     property,
     roomNumber,
@@ -387,6 +389,20 @@ export const GuestCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) =
 
         {activeTab === "experiences" && (
           <section className="space-y-4 animate-in fade-in">
+            <button
+              onClick={() => setLocation("/tour/rocks-harbour")}
+              className="w-full text-left rounded-[1.35rem] bg-gradient-to-br from-[#18271f] to-[#2a4036] text-[#fffdf8] p-4"
+            >
+              <span className="ap-kicker text-amber-300">Self-guided · no app</span>
+              <h3 className="ap-display text-xl mt-1">The Rocks to the sails</h3>
+              <p className="text-xs text-white/75 mt-1">90 min · 2.4 km · map, voice, and a share link like FreeGuides.</p>
+              <span className="inline-flex items-center gap-1 mt-3 text-xs font-semibold">Start the walk <ArrowRight size={14} /></span>
+            </button>
+            <button onClick={() => setLocation("/u/harbour-hotel")} className="w-full text-left ap-card p-3.5 text-xs">
+              <span className="ap-kicker">Hotel profile</span>
+              <strong className="block mt-0.5">Harbour Hotel on AirPal</strong>
+              <span className="text-[11px] text-[#7a877f]">All walks from this stay · shareable QR</span>
+            </button>
             <div className="rounded-2xl bg-gradient-to-r from-[#fff4e4] via-[#eef6f0] to-transparent border border-[#dde3db] p-4 space-y-1">
               <h3 className="font-bold text-sm text-[#16211c]">Curated Sydney Experiences</h3>
               <p className="text-xs text-[#5a6b62]">Direct booking with hotel concierge partner rates and guaranteed availability.</p>

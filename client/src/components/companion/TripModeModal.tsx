@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useAirPal } from "../../contexts/AirPalContext";
+import { useLocation } from "wouter";
 import {
   Compass,
   CloudRain,
@@ -34,6 +35,7 @@ interface Props {
 }
 
 export const TripModeModal: React.FC<Props> = ({ isOpen, onClose }) => {
+  const [, setLocation] = useLocation();
   const { weather, setWeather, guestName, property, trackEvent } = useAirPal();
   const [duration, setDuration] = useState<string>("half-day");
   const [selectedInterests, setSelectedInterests] = useState<string[]>(["Culture", "Food"]);
@@ -398,15 +400,13 @@ export const TripModeModal: React.FC<Props> = ({ isOpen, onClose }) => {
               </button>
               <button
                 onClick={() => {
-                  toast.success("Live route started", {
-                    description: `Turn-by-turn from ${property.name} lobby.`,
-                  });
                   onClose();
+                  setLocation("/tour/rocks-harbour");
                 }}
                 className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-400 text-stone-950 font-semibold text-xs"
               >
                 <MapPin size={14} />
-                Start route
+                Walk this tour
                 <ArrowRight size={14} />
               </button>
             </div>

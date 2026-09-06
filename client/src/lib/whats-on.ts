@@ -12,6 +12,11 @@ export interface WhatsOnEvent {
   detail: string;
   kind: WhatsOnKind;
   tripId?: string;
+  endTime?: string;
+  location?: string;
+  allDay?: boolean;
+  startAt?: string;
+  endAt?: string;
 }
 
 function ymd(value: string) {
@@ -36,6 +41,8 @@ export function collectWhatsOn(trips: Trip[], items: TripItem[]): WhatsOnEvent[]
       detail: `${trip.city} · ${trip.party}${trip.companions.length ? ` · ${trip.companions.map((c) => c.name).join(", ")}` : ""}`,
       kind: "trip",
       tripId: trip.id,
+      location: trip.city,
+      allDay: true,
     });
     if (trip.endDate !== trip.startDate) {
       events.push({
@@ -46,6 +53,8 @@ export function collectWhatsOn(trips: Trip[], items: TripItem[]): WhatsOnEvent[]
         detail: trip.city,
         kind: "trip",
         tripId: trip.id,
+        location: trip.city,
+        allDay: true,
       });
     }
   });
@@ -59,6 +68,9 @@ export function collectWhatsOn(trips: Trip[], items: TripItem[]): WhatsOnEvent[]
       detail: item.subtitle || item.location || item.kind,
       kind: "stop",
       tripId: item.tripId,
+      location: item.location,
+      startAt: item.startAt,
+      endAt: item.endAt,
     });
   });
 
@@ -71,6 +83,7 @@ export function collectWhatsOn(trips: Trip[], items: TripItem[]): WhatsOnEvent[]
         title: event.title,
         detail: `${group.name} · ${event.where}`,
         kind: "community",
+        location: event.where,
       });
     });
   });
@@ -84,6 +97,7 @@ export function collectWhatsOn(trips: Trip[], items: TripItem[]): WhatsOnEvent[]
       title: event.title,
       detail: `${event.detail} · ${event.price}`,
       kind: "hotel",
+      location: event.detail,
     });
   });
 
@@ -96,6 +110,7 @@ export function collectWhatsOn(trips: Trip[], items: TripItem[]): WhatsOnEvent[]
       detail: `${event.where} · ${event.detail}`,
       kind: "campus",
       tripId: "trip-harbour-college-2026",
+      location: event.where,
     });
   });
 
@@ -109,6 +124,8 @@ export function collectWhatsOn(trips: Trip[], items: TripItem[]): WhatsOnEvent[]
       detail: `${row.kind} · ${row.place}`,
       kind: "campus",
       tripId: "trip-harbour-college-2026",
+      endTime: row.end,
+      location: row.place,
     });
   });
 

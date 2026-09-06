@@ -14,6 +14,8 @@ import Home from "./pages/Home";
 import { SharedTrip } from "./pages/SharedTrip";
 import { TravelOs } from "./pages/TravelOs";
 import { CampusCompanion } from "./pages/CampusCompanion";
+import { WalkingTourPage } from "./pages/WalkingTour";
+import { GuideProfilePage } from "./pages/GuideProfile";
 import { TravelOsProvider } from "./contexts/TravelOsContext";
 import { isNativeShell } from "./lib/platform";
 
@@ -82,6 +84,8 @@ function MainApp() {
     ? "os"
     : location.startsWith("/campus") || location.startsWith("/c/")
     ? "campus"
+    : location.startsWith("/tour") || location.startsWith("/u/")
+    ? "companion"
     : location.startsWith("/stay") || location.startsWith("/g/")
     ? "companion"
     : native
@@ -92,7 +96,13 @@ function MainApp() {
     if (native && location === "/") setLocation("/os");
   }, [native, location, setLocation]);
 
-  const lockViewport = activeView === "companion" || activeView === "os" || activeView === "campus" || location.startsWith("/trip");
+  const lockViewport =
+    activeView === "companion" ||
+    activeView === "os" ||
+    activeView === "campus" ||
+    location.startsWith("/trip") ||
+    location.startsWith("/tour") ||
+    location.startsWith("/u/");
 
   return (
     <div className={`flex flex-col bg-[#f9f8f4] text-[#16211c] font-sans antialiased ${lockViewport ? "h-dvh overflow-hidden" : "min-h-dvh"}`}>
@@ -120,6 +130,8 @@ function MainApp() {
           <Route path="/g/:propertyId" component={GuestRoute} />
           <Route path="/campus" component={CampusRoute} />
           <Route path="/c/:campusId" component={CampusRoute} />
+          <Route path="/tour/:tourId" component={WalkingTourPage} />
+          <Route path="/u/:profileId" component={GuideProfilePage} />
           <Route path="/trip/:tripId" component={SharedTrip} />
           <Route path="/">{native ? <TravelOs /> : <Home />}</Route>
         </Switch>

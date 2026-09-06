@@ -1,13 +1,17 @@
 import React, { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import type { Trip, TripItem } from "@shared/travel-os";
 import {
   collectWhatsOn,
   datesWithEvents,
   eventsOnDate,
   tripSpansOnDate,
+  type WhatsOnEvent,
   type WhatsOnKind,
 } from "../../lib/whats-on";
+import { CalendarSyncPanel } from "./CalendarSyncPanel";
+import { preferredCalendarTarget, syncCalendar, whatsOnToCalendarEvents } from "../../lib/calendar-sync";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -41,8 +45,25 @@ export function WhatsOnCalendar({ trips, items, onSelectTrip }: Props) {
 
   const all = useMemo(() => collectWhatsOn(trips, items), [trips, items]);
   const marked = useMemo(() => datesWithEvents(all), [all]);
-  const dayEvents = eventsOnDate(all, selected);
+  const dayEvents = useMemo(() => {
+    const seen = new Set<string>();
+    return eventsOnDate(all, selected).filter((event) => {
+      const key = event.title.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [all, selected]);
   const spanning = tripSpansOnDate(trips, selected);
+  const [scope, setScope] = useState<"day" | "all">("all");
+  const syncEvents = scope === "day" ? dayEvents : all;
+
+  const addOne = async (event: WhatsOnEvent, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const cal = whatsOnToCalendarEvents([event]);
+    const result = await syncCalendar(preferredCalendarTarget(), cal, "airpal-event.ics");
+    if (result.ok) toast.success("Added to calendar", { description: result.message });
+  };
 
   const first = new Date(cursor.year, cursor.month, 1);
   const startWeekday = first.getDay();
@@ -137,6 +158,24 @@ export function WhatsOnCalendar({ trips, items, onSelectTrip }: Props) {
         <span className="inline-flex items-center gap-1"><i className="w-2 h-2 rounded-full bg-[#1d6aa5] inline-block" /> Campus</span>
       </div>
 
+      <div className="space-y-2">
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => setScope("all")}
+            className={`px-2.5 py-1 rounded-full text-[10px] border ${scope === "all" ? "bg-[#18271f] text-white border-[#18271f]" : "bg-white border-[#e3e9e1] text-[#5a6b62]"}`}
+          >
+            All events
+          </button>
+          <button
+            onClick={() => setScope("day")}
+            className={`px-2.5 py-1 rounded-full text-[10px] border ${scope === "day" ? "bg-[#18271f] text-white border-[#18271f]" : "bg-white border-[#e3e9e1] text-[#5a6b62]"}`}
+          >
+            This day
+          </button>
+        </div>
+        <CalendarSyncPanel events={syncEvents} filename={scope === "day" ? `airpal-${selected}.ics` : "airpal-trip.ics"} compact />
+      </div>
+
       <div>
         <h3 className="text-xs font-bold mb-1.5">What’s on · {selectedLabel}</h3>
         {spanning.length > 0 && (
@@ -149,20 +188,28 @@ export function WhatsOnCalendar({ trips, items, onSelectTrip }: Props) {
         ) : (
           <div className="space-y-1.5">
             {dayEvents.map((event) => (
-              <button
-                key={event.id}
-                onClick={() => event.tripId && onSelectTrip?.(event.tripId)}
-                className="w-full text-left rounded-xl border border-[#dde3db] px-2.5 py-2"
-              >
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${KIND_DOT[event.kind]}`} />
-                  <span className="text-[10px] font-mono text-[#c57a32] w-14 shrink-0">{event.time}</span>
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold truncate">{event.title}</div>
-                    <div className="text-[10px] text-[#7a877f] truncate">{event.detail}</div>
+              <div key={event.id} className="flex items-center gap-1 rounded-xl border border-[#dde3db] px-2.5 py-2">
+                <button
+                  onClick={() => event.tripId && onSelectTrip?.(event.tripId)}
+                  className="min-w-0 flex-1 text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${KIND_DOT[event.kind]}`} />
+                    <span className="text-[10px] font-mono text-[#c57a32] w-14 shrink-0">{event.time}</span>
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold truncate">{event.title}</div>
+                      <div className="text-[10px] text-[#7a877f] truncate">{event.detail}</div>
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+                <button
+                  onClick={(e) => addOne(event, e)}
+                  className="grid place-items-center w-8 h-8 rounded-full text-[#c57a32] shrink-0"
+                  aria-label={`Add ${event.title} to calendar`}
+                >
+                  <CalendarPlus size={14} />
+                </button>
+              </div>
             ))}
           </div>
         )}

@@ -26,6 +26,9 @@ import { CompanionSheet } from "../components/companion/CompanionSheet";
 import { makeQrDataUrl, campusQrPayload } from "../lib/qr";
 import { answerFromKnowledge } from "../lib/travel-os-engine";
 import { SEED_COMMUNITIES } from "@shared/travel-os";
+import { CalendarSyncPanel } from "../components/os/CalendarSyncPanel";
+import { useLocation } from "wouter";
+import type { WhatsOnEvent } from "../lib/whats-on";
 import {
   CAMPUS_CLASSES,
   CAMPUS_EMERGENCY,
@@ -51,6 +54,7 @@ const KIND_TONE: Record<string, string> = {
 };
 
 export const CampusCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) => {
+  const [, setLocation] = useLocation();
   const { deviceMode, weather, seniorMode, qrType, roomNumber, guestName } = useAirPal();
   const [tab, setTab] = useState<Tab>("today");
   const [wifiOpen, setWifiOpen] = useState(false);
@@ -72,6 +76,30 @@ export const CampusCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) 
   const nowOptions = useMemo(() => whatToDoOnCampus(today, hour), [today, hour]);
   const todayClasses = classesOnDate(today);
   const todayEvents = eventsOnDate(today);
+  const campusCalendar: WhatsOnEvent[] = useMemo(
+    () => [
+      ...CAMPUS_EVENTS.map((event) => ({
+        id: event.id,
+        date: event.date,
+        time: event.time,
+        title: event.title,
+        detail: `${event.where} · ${event.detail}`,
+        kind: "campus" as const,
+        location: event.where,
+      })),
+      ...CAMPUS_CLASSES.filter((row) => row.date).map((row) => ({
+        id: row.id,
+        date: row.date as string,
+        time: row.start,
+        endTime: row.end,
+        title: row.title,
+        detail: `${row.kind} · ${row.place}`,
+        kind: "campus" as const,
+        location: row.place,
+      })),
+    ],
+    [],
+  );
   const next = nextCampusClass(today, hhmm);
   const cityEvents = SEED_COMMUNITIES.flatMap((g) =>
     g.events.filter((e) => e.date >= today && e.date <= "2026-09-20").map((e) => ({ ...e, group: g.name })),
@@ -205,6 +233,26 @@ export const CampusCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) 
                   </div>
                 </div>
               ))}
+              <CalendarSyncPanel
+                events={campusCalendar.filter((event) => event.date === today)}
+                filename="harbour-college-today.ics"
+              />
+              <button
+                onClick={() => setLocation("/u/harbour-college")}
+                className="w-full text-left ap-card p-4"
+              >
+                <span className="ap-kicker">College profile</span>
+                <h3 className="font-bold text-sm mt-0.5">Harbour College on AirPal</h3>
+                <p className="text-[11px] text-[#7a877f]">Public page of walks, follow, and a QR for the college.</p>
+              </button>
+              <button
+                onClick={() => setLocation("/tour/rocks-harbour")}
+                className="w-full text-left ap-card p-4"
+              >
+                <span className="ap-kicker">City walk</span>
+                <h3 className="font-bold text-sm mt-0.5">The Rocks to the sails</h3>
+                <p className="text-[11px] text-[#7a877f]">90 min from college via Redfern — map, voice, shareable like FreeGuides.</p>
+              </button>
             </section>
 
             <section className="ap-card p-4 flex items-center gap-3">
@@ -252,6 +300,7 @@ export const CampusCompanion: React.FC<{ bare?: boolean }> = ({ bare = false }) 
               <Clock size={14} className="inline mr-1" />
               Next week the same slots repeat. House meeting is Friday — attendance is expected.
             </div>
+            <CalendarSyncPanel events={campusCalendar} filename="harbour-college-timetable.ics" />
           </section>
         )}
 

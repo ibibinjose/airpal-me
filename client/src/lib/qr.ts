@@ -62,6 +62,10 @@ export function parseQrPayload(raw: string): QrIntent {
     if (url.pathname.startsWith("/campus")) {
       return { kind: "campus", campusId: "harbour-college", room: url.searchParams.get("room") || "R12" };
     }
+    const walk = url.pathname.match(/^\/tour\/([^/]+)/);
+    if (walk?.[1]) return { kind: "url", href: url.pathname };
+    const profile = url.pathname.match(/^\/u\/([^/]+)/);
+    if (profile?.[1]) return { kind: "url", href: url.pathname };
   } catch {
     /* fall through */
   }

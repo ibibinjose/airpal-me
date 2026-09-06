@@ -36,6 +36,7 @@ import { SafetyModal } from "../components/companion/SafetyModal";
 import { QrScanSheet } from "../components/os/QrScanSheet";
 import { TripQrCard } from "../components/os/TripQrCard";
 import { WhatsOnCalendar } from "../components/os/WhatsOnCalendar";
+import { CalendarSyncPanel } from "../components/os/CalendarSyncPanel";
 import {
   EXPLORE_DESTINATIONS,
   SEED_COMMUNITIES,
@@ -135,8 +136,10 @@ function TravelOsInner() {
   }, [os.trips, os.items, query, whenChip, partyChip, tagChip]);
 
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("trip");
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("trip");
     if (id) os.setActiveTripId(id);
+    if (params.get("open") === "cal") setCalOpen(true);
   }, [os.setActiveTripId]);
 
   const todayOn = useMemo(() => {
@@ -294,6 +297,9 @@ function TravelOsInner() {
                   ))}
                 </div>
               )}
+              <div className="mt-3">
+                <CalendarSyncPanel events={todayOn} filename="airpal-today.ics" compact />
+              </div>
             </section>
 
             <section className="ap-card p-4">
@@ -458,6 +464,21 @@ function TravelOsInner() {
             <button onClick={() => setBuilderOpen(true)} className="w-full rounded-[1.35rem] bg-[#18271f] text-[#fffdf8] p-5 text-left">
               <span className="ap-kicker text-amber-300">AI trip builder</span>
               <div className="ap-display text-[22px] leading-tight mt-1">Build from who you are, not a search.</div>
+            </button>
+            <button onClick={() => setLocation("/tour/rocks-harbour")} className="w-full text-left ap-card p-4">
+              <span className="ap-kicker">Self-guided walk</span>
+              <h3 className="ap-display text-lg">The Rocks to the sails</h3>
+              <p className="text-xs text-[#5a6b62]">90 min · map, voice at each stop, shareable link. No app.</p>
+            </button>
+            <button onClick={() => setLocation("/tour/hobart-treasures")} className="w-full text-left ap-card p-4">
+              <span className="ap-kicker">Hobart</span>
+              <h3 className="ap-display text-lg">Hidden Treasures of Hobart</h3>
+              <p className="text-xs text-[#5a6b62]">Shop walk of Tasmanian-made things — the FreeGuides idea, on AirPal.</p>
+            </button>
+            <button onClick={() => setLocation("/u/nisha-sydney")} className="w-full text-left ap-card p-4">
+              <span className="ap-kicker">Local profile</span>
+              <h3 className="font-bold text-sm">Nisha · Sydney</h3>
+              <p className="text-xs text-[#5a6b62]">Public page of walks, follow, and a QR — like a FreeGuides profile.</p>
             </button>
             {EXPLORE_DESTINATIONS.map((d) => (
               <article key={d.id} className="ap-card p-4">
@@ -726,6 +747,8 @@ function TravelOsInner() {
             }
             os.setMode("stay");
             setLocation(`/g/${intent.propertyId}${intent.room ? `?type=room&room=${intent.room}` : ""}`);
+          } else if (intent.kind === "url") {
+            setLocation(intent.href);
           } else if (intent.kind === "campus") {
             if (intent.room) setRoomNumber(intent.room);
             if (intent.type === "room" || intent.type === "dining" || intent.type === "experience" || intent.type === "emergency") {
